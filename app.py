@@ -1033,10 +1033,12 @@ def migrer_sqlite():
             cols={c["name"] for c in insp.get_columns("publication")}
             if "album_id" not in cols: conn.execute(text("ALTER TABLE publication ADD COLUMN album_id INTEGER"))
 
+with app.app_context():
+    db.create_all()
+    migrer_sqlite()
+    db.create_all()
+    seeder_donnees_demo()
+
 if __name__ == "__main__":
-    with app.app_context():
-        db.create_all()
-        migrer_sqlite()
-        db.create_all()
-        seeder_donnees_demo()
-    app.run(debug=True)
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host="0.0.0.0", port=port, debug=True)
