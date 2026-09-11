@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block title %}Contact / Aide — InstaShoot{% endblock %}
+{% block content %}
+<main class="help-page">
+  <header class="help-hero"><span class="page-kicker">CENTRE D'AIDE</span><h1>Comment pouvons-nous vous aider ?</h1><p>Retrouvez rapidement les réponses aux questions les plus courantes sur InstaShoot.</p></header>
+  <section class="help-grid">
+    <article class="help-card help-card-featured"><span class="help-icon">?</span><div><span class="page-kicker">BESOIN D'ASSISTANCE</span><h2>Une question sur une demande ?</h2><p>Pour une prestation, un devis ou une réservation, utilisez directement la messagerie liée à la personne concernée.</p><a href="{{ url_for('mes_demandes') if session.get('utilisateur_id') else url_for('connexion') }}" class="btn btn-primary btn-sm">Voir mes demandes →</a></div></article>
+    <article class="help-card"><span class="help-icon">01</span><h2>Compte</h2><p>Connexion, inscription, profil et paramètres.</p><a href="{{ url_for('parametres') if session.get('utilisateur_id') else url_for('connexion') }}">Gérer mon compte →</a></article>
+    <article class="help-card"><span class="help-icon">02</span><h2>Devis & réservations</h2><p>Comprendre les demandes, les devis et les statuts.</p><a href="{{ url_for('mes_demandes') if session.get('utilisateur_id') else url_for('connexion') }}">Suivre mes demandes →</a></article>
+    <article class="help-card"><span class="help-icon">03</span><h2>Photographes</h2><p>Créer une vitrine, publier vos travaux et recevoir des clients.</p><a href="{{ url_for('devenir_photographe') }}">Devenir photographe →</a></article>
+  </section>
+  <section class="faq-section"><div><span class="page-kicker">FAQ</span><h2>Les réponses essentielles</h2></div><div class="faq-list"><details><summary>Comment trouver un photographe ?</summary><p>Utilisez la recherche et les filtres par ville ou prestation, puis ouvrez le profil d'un photographe pour découvrir son univers et demander un devis.</p></details><details><summary>Comment envoyer une demande de devis ?</summary><p>Depuis le profil d'un photographe, choisissez une prestation, une date, votre budget et décrivez votre projet avant d'envoyer la demande.</p></details><details><summary>Où suivre une demande ?</summary><p>Une fois connecté, retrouvez toutes vos demandes dans « Mes demandes ». Les statuts évoluent au fil des échanges et de la réservation.</p></details><details><summary>Comment contacter quelqu'un sur InstaShoot ?</summary><p>La messagerie permet de rechercher n'importe quel utilisateur inscrit, puis d'ouvrir une conversation lorsque ses paramètres de contact l'autorisent.</p></details><details><summary>Comment devenir photographe sur InstaShoot ?</summary><p>Créez un compte photographe, renseignez votre activité et vos spécialités, puis développez votre portfolio et votre vitrine.</p></details></div></section>
+</main>
+{% endblock %}

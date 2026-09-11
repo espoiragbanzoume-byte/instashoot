@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+{% block title %}Messages — InstaShoot{% endblock %}
+{% block content %}
+<section class="msg-page">
+  <div class="msg-layout">
+    <aside class="msg-sidebar">
+      <div class="msg-sidebar-header">
+        <div>
+          <span class="page-kicker">INSTANTANÉ</span>
+          <h1>Messages</h1>
+        </div>
+        <span class="msg-count">{{ contacts|length }}</span>
+      </div>
+
+      <div class="msg-public-search">
+        <label class="msg-public-search-label" for="recherche-utilisateurs">Rechercher une personne</label>
+        <div class="msg-search-wrap">
+          <span aria-hidden="true">⌕</span>
+          <input type="search" id="recherche-utilisateurs" placeholder="Nom, ville, spécialité…" autocomplete="off">
+        </div>
+        <div id="resultats-utilisateurs" class="public-client-results" aria-live="polite"></div>
+      </div>
+
+      <div class="msg-tabs"><span class="msg-tab active">Conversations</span></div>
+      <div class="msg-liste" id="liste-contacts">
+        {% for contact in contacts %}
+        <a class="msg-contact {% if destinataire and destinataire.id == contact.id %}active{% endif %}" href="{{ url_for('messagerie', avec=contact.id) }}">
+          {% if contact.avatar_url %}<img src="{{ contact.avatar_url }}" alt="{{ contact.nom }}">{% else %}<span class="msg-contact-avatar">{{ contact.nom[:1]|upper }}</span>{% endif %}
+          <span><strong>{{ contact.nom }}</strong><small>{{ 'Photographe' if contact.role == 'photographe' else 'Client' }}{% if contact.ville %} · {{ contact.ville }}{% endif %}</small></span>
+        </a>
+        {% else %}
+          <div class="msg-empty-list"><div class="msg-empty-icon">✦</div><strong>Aucune conversation</strong><p>Recherchez une personne ou contactez un photographe depuis son profil.</p></div>
+        {% endfor %}
+      </div>
+    </aside>
+
+    <section class="msg-conversation {% if destinataire %}has-recipient{% endif %}">
+      {% if destinataire %}
+        <header class="msg-conversation-header">
+          <a class="msg-mobile-back" href="{{ url_for('messagerie') }}" aria-label="Retour aux conversations">←</a>
+          {% if destinataire.avatar_url %}<img src="{{ destinataire.avatar_url }}" alt="{{ destinataire.nom }}">{% else %}<span class="msg-contact-avatar">{{ destinataire.nom[:1]|upper }}</span>{% endif %}
+          <div><strong>{{ destinataire.nom }}</strong><small>{{ 'Photographe' if destinataire.role == 'photographe' else 'Client' }}{% if destinataire.ville %} · {{ destinataire.ville }}{% endif %}</small></div>
+        </header>
+        <div class="msg-messages" id="zone-messages">
+          {% for m in conversation %}
+            <div class="msg-bulle {% if m.expediteur_id == moi.id %}moi{% else %}autre{% endif %}">
+              <p>{{ m.contenu }}</p><small>{{ m.created_at.strftime('%d/%m · %H:%M') }}</small>
+            </div>
+          {% else %}
+            <div class="msg-empty-conversation"><div>✦</div><strong>Votre conversation commence ici</strong><p>Écrivez à {{ destinataire.nom }} pour parler de votre projet.</p></div>
+          {% endfor %}
+        </div>
+        <form method="post" class="msg-form">
+          <input type="hidden" name="destinataire_id" value="{{ destinataire.id }}">
+          <input type="text" name="contenu" maxlength="2000" placeholder="Écrire un message…" autocomplete="off" required>
+          <button type="submit" class="btn btn-primary">Envoyer <span>→</span></button>
+        </form>
+      {% else %}
+        <div class="msg-panneau-vide">
+          <div class="msg-icone-vide">✦</div>
+          <span class="page-kicker">VOTRE ESPACE</span>
+          <h2>Vos messages</h2>
+          <p>Choisissez une conversation ou recherchez n'importe quelle personne inscrite sur InstaShoot.</p>
+        </div>
+      {% endif %}
+    </section>
+  </div>
+</section>
+{% endblock %}

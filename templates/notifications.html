@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block title %}Notifications — InstaShoot{% endblock %}
+{% block content %}
+<section class="results notifications-page">
+  <div class="notifications-head"><div><p class="eyebrow">CENTRE D’ACTIVITÉ</p><h1>Notifications</h1><p class="page-intro">Retrouvez les demandes, albums, interactions et activités importantes de votre compte.</p></div>{% if notifications|selectattr('lu','equalto',false)|list|length %}<form method="post" action="{{ url_for('lire_toutes_notifications') }}"><button class="btn btn-outline btn-sm">Tout marquer comme lu</button></form>{% endif %}</div>
+  {% if notifications %}
+  <div class="notification-list">
+    {% for n in notifications %}
+    <article class="notification-card {{ 'unread' if not n.lu else '' }}">
+      <div class="notification-icon">{% if n.type=='collaboration' %}📸{% elif n.type=='message' %}💬{% elif n.type=='interaction' %}♥{% elif n.type=='abonnement' %}＋{% elif n.type=='demande' %}📥{% else %}🔔{% endif %}</div>
+      <div class="notification-main"><div class="notification-top"><strong>{{ n.titre }}</strong>{% if not n.lu %}<span class="notification-new">NOUVEAU</span>{% endif %}</div><p>{{ n.contenu }}</p><small>{{ n.created_at.strftime('%d/%m/%Y à %H:%M') }}</small></div>
+      {% if not n.lu %}<form method="post" action="{{ url_for('lire_notification', notification_id=n.id) }}"><button class="notification-open" type="submit">Voir</button></form>{% elif n.lien %}<a class="notification-open" href="{{ n.lien }}">Voir</a>{% endif %}
+    </article>
+    {% endfor %}
+  </div>
+  {% else %}<div class="notification-empty-state"><div>🔔</div><h2>Tout est calme</h2><p>Les nouvelles activités de votre compte apparaîtront ici.</p></div>{% endif %}
+</section>
+{% endblock %}

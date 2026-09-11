@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+
+{% block title %}Modifier mon profil — InstaShoot{% endblock %}
+
+{% block content %}
+
+  <section class="auth-container">
+    <h1>Modifier mon profil</h1>
+
+    {% if message %}
+      <p class="auth-message">{{ message }}</p>
+    {% endif %}
+
+    <form class="auth-form" method="post" enctype="multipart/form-data">
+      <label>Photo de profil</label>
+      <input type="file" name="avatar" accept="image/*">
+
+      <label>Nom complet</label>
+      <input type="text" name="nom" value="{{ utilisateur.nom }}" required>
+
+      <label>Téléphone</label>
+      <input type="tel" name="telephone" class="pc-phone" value="{{ utilisateur.telephone or '' }}">
+
+      <label>Ville</label>
+      <input type="text" name="ville" value="{{ utilisateur.ville or '' }}">
+
+      <label>Bio</label>
+      <textarea name="bio" rows="2" maxlength="150" placeholder="Une courte phrase sur toi">{{ utilisateur.bio or '' }}</textarea>
+
+      {% if utilisateur.role == 'photographe' %}
+        <label>Présentation</label>
+        <textarea name="presentation" rows="4">{{ utilisateur.profil_photographe.presentation or '' }}</textarea>
+
+        <label>Spécialités (séparées par des virgules)</label>
+        <input type="text" name="specialites" value="{{ utilisateur.profil_photographe.specialites or '' }}">
+
+        <label>Années d'expérience</label>
+        <input type="number" name="annees_experience" min="0" value="{{ utilisateur.profil_photographe.annees_experience or 0 }}">
+
+        <label>Tarif de départ (FCFA)</label>
+        <input type="number" name="tarif_min" min="0" value="{{ utilisateur.profil_photographe.tarif_min or 0 }}">
+
+        <label>Réseaux sociaux</label>
+        <input type="text" name="reseaux_sociaux" value="{{ utilisateur.profil_photographe.reseaux_sociaux or '' }}">
+      {% endif %}
+
+      <label>Nouveau mot de passe (laisser vide pour ne pas changer)</label>
+      <input type="password" name="nouveau_mot_de_passe">
+
+      <button type="submit" class="btn btn-primary">Enregistrer</button>
+    </form>
+
+    <p class="auth-switch"><a href="{{ url_for('mon_profil') }}">Retour à mon profil</a></p>
+  </section>
+
+{% endblock %}

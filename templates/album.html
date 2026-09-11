@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% block title %}{{ album.titre }} — InstaShoot{% endblock %}
+{% block content %}
+<section class="pc-album-publication-page">
+  <div class="album-back-row"><a href="javascript:history.back()">← Retour</a></div>
+  <article class="pc-post-card pc-album-publication" id="album-publication-{{ album.id }}">
+    <div class="pc-post-head">
+      {% if album.photographe.avatar_url %}<img src="{{ album.photographe.avatar_url }}" class="pc-post-avatar" alt="{{ album.photographe.nom }}">{% else %}<div class="pc-post-avatar pc-avatar-letter">{{ album.photographe.nom[:1]|upper }}</div>{% endif %}
+      <div class="pc-post-author"><a href="{{ url_for('profil_photographe', photographe_id=album.photographe.id) }}"><strong>{{ album.photographe.nom }}</strong></a><small>{{ album.created_at.strftime('%d/%m/%Y à %H:%M') }}</small></div>
+      {% if utilisateur_courant and utilisateur_courant.id == album.client_id %}<span class="pc-post-badge">By {{ album.photographe.nom }}</span>{% elif utilisateur_courant and utilisateur_courant.id == album.photographe_id and album.client %}<span class="pc-post-badge">Pour {{ album.client.nom }}</span>{% elif album.client %}<span class="pc-post-badge">Album collaboratif</span>{% endif %}
+    </div>
+
+    {% if utilisateur_courant and album.client_id == utilisateur_courant.id and not album.collaboration_acceptee %}
+    <div class="pc-collab-box"><div><strong>Une invitation vous attend</strong><p>{{ album.photographe.nom }} vous a identifié dans « {{ album.titre }} ».</p></div><form method="post" action="{{ url_for('gerer_collaboration', album_id=album.id) }}"><input type="hidden" name="politique_telechargement" value="{{ album.politique_telechargement }}"><button class="btn btn-primary">Approuver l’album</button></form></div>
+    {% endif %}
+
+    <div class="pc-carousel pc-carousel-large" data-carousel="album-page-{{ album.id }}">
+      <div class="pc-carousel-track">{% for photo in album.photos %}<div class="pc-carousel-slide {% if loop.first %}active{% endif %}"><img src="{{ photo.image_url }}" alt="{{ album.titre }} — photo {{ loop.index }}"></div>{% endfor %}</div>
+      {% if album.photos|length > 1 %}<button type="button" class="pc-carousel-arrow prev" onclick="carouselAlbum('album-page-{{ album.id }}',-1)">‹</button><button type="button" class="pc-carousel-arrow next" onclick="carouselAlbum('album-page-{{ album.id }}',1)">›</button><div class="pc-carousel-dots">{% for photo in album.photos %}<button type="button" class="pc-carousel-dot {% if loop.first %}active{% endif %}" onclick="allerPhotoAlbum('album-page-{{ album.id }}',{{ loop.index0 }})"></button>{% endfor %}</div><span class="pc-carousel-count">1 / {{ album.photos|length }}</span>{% endif %}
+    </div>
+
+    {% set pub=album.publication %}
+    {% if pub %}
+    <div class="pc-post-actions" aria-label="Actions de l’album">
+      <form method="post" data-ajax-interaction action="{{ url_for('liker_publication', publication_id=pub.id) }}"><button class="pc-action {{ 'active' if utilisateur_courant and pub.est_aimee_par(utilisateur_courant.id) else '' }}" title="J'aime"><svg viewBox="0 0 24 24"><path d="M20.8 8.7c0 5.5-8.8 10.3-8.8 10.3S3.2 14.2 3.2 8.7A4.7 4.7 0 0 1 12 6.2a4.7 4.7 0 0 1 8.8 2.5Z"/></svg><span>{{ pub.nb_likes() }}</span></button></form>
+      <a class="pc-action" href="#album-comments" title="Commentaires"><svg viewBox="0 0 24 24"><path d="M20 11.5a8 8 0 0 1-8 8 8.7 8.7 0 0 1-3.7-.8L4 20l1.3-3.4A8 8 0 1 1 20 11.5Z"/></svg><span>{{ pub.nb_commentaires() }}</span></a>
+      <button type="button" class="pc-action pc-share-button" onclick="partagerPublication('{{ pub.id }}','{{ url_for('voir_publication', publication_id=pub.id, _external=True) }}','{{ album.titre|e }}')" title="Partager"><svg viewBox="0 0 24 24"><path d="M22 2 11 13"/><path d="m22 2-7 20-4-9-9-4Z"/></svg></button>
+      <form method="post" data-ajax-interaction action="{{ url_for('reposter_publication', publication_id=pub.id) }}"><button class="pc-action" title="Republication"><svg viewBox="0 0 24 24"><path d="M17 2l3 3-3 3"/><path d="M20 5H7a4 4 0 0 0-4 4"/><path d="M7 22l-3-3 3-3"/><path d="M4 19h13a4 4 0 0 0 4-4"/></svg><span>{{ pub.nb_reposts() }}</span></button></form>
+      <form method="post" data-ajax-interaction action="{{ url_for('enregistrer_publication', publication_id=pub.id) }}"><button class="pc-action pc-save-button {{ 'active' if utilisateur_courant and pub.est_enregistree_par(utilisateur_courant.id) else '' }}" title="Enregistrer"><svg viewBox="0 0 24 24"><path d="M6 3.5h12v17l-6-3.5-6 3.5Z"/></svg></button></form>
+    </div>
+    {% endif %}
+
+    <div class="pc-album-copy"><h1>{{ album.titre }}</h1><p>{{ album.categorie or 'Séance photo' }} · {{ album.photos|length }} photo{{ 's' if album.photos|length>1 else '' }}</p>{% if album.client and album.collaboration_acceptee %}<small>Client : {{ album.client.nom }}</small>{% endif %}</div>
+
+    {% if utilisateur_courant and utilisateur_courant.id in [album.photographe_id, album.client_id] %}<div class="pc-download-settings"><div><strong>Téléchargement</strong><span>{{ {'client':'Client uniquement','tous':'Tout le monde','personne':'Personne'}[album.politique_telechargement] }}</span></div>{% if utilisateur_courant.id==album.photographe_id %}<form method="post" action="{{ url_for('gerer_collaboration', album_id=album.id) }}"><select name="politique_telechargement"><option value="client" {% if album.politique_telechargement=='client' %}selected{% endif %}>Client uniquement</option><option value="tous" {% if album.politique_telechargement=='tous' %}selected{% endif %}>Tout le monde</option><option value="personne" {% if album.politique_telechargement=='personne' %}selected{% endif %}>Personne</option></select><button class="btn btn-outline btn-sm">Enregistrer</button></form>{% endif %}</div>{% endif %}
+
+    <div class="pc-comments album-comments" id="album-comments">{% if pub and pub.commentaires %}{% for c in pub.commentaires %}<p><strong>{{ c.utilisateur.nom }}</strong> {{ c.contenu }}</p>{% endfor %}{% else %}<p class="empty-comment">Aucun commentaire pour le moment.</p>{% endif %}</div>
+    {% if utilisateur_courant and pub %}<form class="pc-comment-form" data-ajax-interaction method="post" action="{{ url_for('commenter_publication', publication_id=pub.id) }}"><input name="contenu" placeholder="Ajouter un commentaire à l’album…" maxlength="500"><button>Publier</button></form>{% endif %}
+
+    {% set can_download = album.politique_telechargement == 'tous' or (album.politique_telechargement == 'client' and utilisateur_courant and utilisateur_courant.id == album.client_id) %}
+    {% if can_download %}<div class="album-download-all"><span>Vous pouvez télécharger les photos de cet album.</span>{% for photo in album.photos %}<a href="{{ photo.image_url }}" download class="btn btn-outline btn-sm">Télécharger {{ loop.index }}</a>{% endfor %}</div>{% endif %}
+
+    {% if utilisateur_courant and utilisateur_courant.id==album.photographe_id %}<button type="button" class="btn btn-danger-outline" onclick="ouvrirModalSuppressionAlbum('{{ url_for('supprimer_album', album_id=album.id) }}','{{ album.titre|e }}')">Supprimer l’album</button>{% endif %}
+  </article>
+</section>
+<div id="modal-suppression-album" class="modal-overlay modal-danger-overlay" onclick="if(event.target===this) fermerModal('modal-suppression-album')"><div class="modal-box modal-confirm-box"><button class="modal-close" type="button" onclick="fermerModal('modal-suppression-album')">✕</button><div class="confirm-symbol">!</div><div class="modal-eyebrow danger">ACTION DÉFINITIVE</div><h2>Supprimer cet album ?</h2><p id="album-delete-description">L’album et toutes ses photos seront supprimés définitivement.</p><div class="confirm-note"><strong>Cette action ne peut pas être annulée.</strong><span>Vérifiez le contenu avant de confirmer.</span></div><div class="modal-actions"><button type="button" class="btn btn-outline" onclick="fermerModal('modal-suppression-album')">Annuler</button><form id="album-delete-form" method="post"><button type="submit" class="btn btn-danger-solid">Supprimer définitivement</button></form></div></div></div>
+{% endblock %}

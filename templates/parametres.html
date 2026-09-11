@@ -1,0 +1,133 @@
+{% extends "base.html" %}
+{% block title %}Paramètres — InstaShoot{% endblock %}
+{% block content %}
+<section class="ig-settings-page">
+  <div class="ig-settings-head">
+    <a href="{{ url_for('mon_profil') }}" class="settings-back" aria-label="Retour">‹</a>
+    <div><h1>Paramètres</h1><p>Gérez votre compte, votre confidentialité et votre sécurité.</p></div>
+  </div>
+  {% with messages=get_flashed_messages(with_categories=true) %}
+    {% for category,msg in messages %}<div class="settings-flash {{ category }}">{{ msg }}</div>{% endfor %}
+  {% endwith %}
+
+  <div class="ig-settings-layout">
+    <aside class="ig-settings-menu">
+      <a class="{{ 'active' if section=='compte' else '' }}" href="{{ url_for('parametres', section='compte') }}"><span>👤</span><div><strong>Compte</strong><small>Email, téléphone, ville</small></div><b>›</b></a>
+      <a class="{{ 'active' if section=='profil' else '' }}" href="{{ url_for('parametres', section='profil') }}"><span>✎</span><div><strong>Modifier le profil</strong><small>Nom, photo, bio et informations pro</small></div><b>›</b></a>
+      <a class="{{ 'active' if section=='confidentialite' else '' }}" href="{{ url_for('parametres', section='confidentialite') }}"><span>🔒</span><div><strong>Confidentialité</strong><small>Visibilité et interactions</small></div><b>›</b></a>
+      <a class="{{ 'active' if section=='notifications' else '' }}" href="{{ url_for('parametres', section='notifications') }}"><span>🔔</span><div><strong>Notifications</strong><small>Ce que vous recevez</small></div><b>›</b></a>
+      {% if utilisateur.role=='photographe' %}<a class="{{ 'active' if section=='professionnel' else '' }}" href="{{ url_for('parametres', section='professionnel') }}"><span>📷</span><div><strong>Professionnel</strong><small>Visibilité et disponibilité</small></div><b>›</b></a>{% endif %}
+      <a class="{{ 'active' if section=='securite' else '' }}" href="{{ url_for('parametres', section='securite') }}"><span>🛡</span><div><strong>Sécurité</strong><small>Mot de passe et protection</small></div><b>›</b></a>
+      <div class="settings-menu-divider"></div>
+      <button type="button" class="settings-menu-action settings-logout-link" onclick="ouvrirModalDeconnexion()"><span class="settings-menu-icon">↪</span><div><strong>Se déconnecter</strong><small>Quitter cette session</small></div><b>›</b></button>
+      <button type="button" class="settings-menu-action settings-danger-link" onclick="ouvrirModalSuppression()"><span>⌫</span><div><strong>Supprimer le compte</strong><small>Suppression définitive de vos données</small></div><b>›</b></button>
+    </aside>
+
+    <main class="ig-settings-content">
+      {% if section=='compte' %}
+      <div class="settings-section">
+        <h2>Compte</h2><p class="settings-section-intro">Vos informations de connexion et de contact. Les modifications se font ici, sans quitter les paramètres.</p>
+        <div class="settings-card">
+          <button class="settings-row settings-row-button" type="button" onclick="ouvrirModalCompte('email')"><div><strong>Email</strong><small>{{ utilisateur.email }}</small></div><span>Modifier&nbsp; ›</span></button>
+          <button class="settings-row settings-row-button" type="button" onclick="ouvrirModalCompte('telephone')"><div><strong>Téléphone</strong><small>{{ utilisateur.telephone or 'Aucun numéro ajouté' }}</small></div><span>Modifier&nbsp; ›</span></button>
+          <button class="settings-row settings-row-button" type="button" onclick="ouvrirModalCompte('ville')"><div><strong>Ville</strong><small>{{ utilisateur.ville or 'Aucune ville ajoutée' }}</small></div><span>Modifier&nbsp; ›</span></button>
+          <div class="settings-row"><div><strong>Type de compte</strong><small>{{ 'Photographe' if utilisateur.role=='photographe' else 'Client' }}</small></div><span class="settings-value">{{ 'Professionnel' if utilisateur.role=='photographe' else 'Personnel' }}</span></div>
+        </div>
+      </div>
+
+      {% elif section=='profil' %}
+      <div class="settings-section">
+        <h2>Modifier le profil</h2><p class="settings-section-intro">Votre profil est modifiable directement dans cette rubrique.</p>
+        <form method="post" enctype="multipart/form-data" class="settings-card settings-profile-form">
+          <input type="hidden" name="action" value="profile_info"><input type="hidden" name="section" value="profil">
+          <div class="settings-profile-avatar-row">
+            <button type="button" class="settings-avatar-button" onclick="document.getElementById('settings-avatar-input').click()">
+              {% if utilisateur.avatar_url %}<img src="{{ utilisateur.avatar_url }}" alt="Photo de profil">{% else %}<span>{{ utilisateur.nom[:1]|upper }}</span>{% endif %}
+              <span class="avatar-edit-badge">✎</span>
+            </button>
+            <div class="settings-avatar-copy"><strong>Photo de profil</strong><small>Ajoutez une image nette et reconnaissable.</small><button type="button" class="settings-inline-action" onclick="document.getElementById('settings-avatar-input').click()">Choisir une photo <span>→</span></button><input id="settings-avatar-input" class="sr-only-file" type="file" name="avatar" accept="image/png,image/jpeg,image/webp" onchange="previsualiserAvatarSettings(this)"></div>
+          </div>
+          <div class="settings-form-section">
+            <div class="settings-section-kicker">Identité</div>
+            <div class="settings-field-grid-one">
+              <label class="settings-field modern-field"><span>Nom complet</span><input name="nom" value="{{ utilisateur.nom }}" required placeholder="Votre nom et prénom"></label>
+              <label class="settings-field modern-field"><span>Bio</span><textarea name="bio" maxlength="255" rows="3" placeholder="Une courte présentation…">{{ utilisateur.bio or '' }}</textarea></label>
+            </div>
+          </div>
+          {% if utilisateur.role=='photographe' %}
+          <div class="settings-form-section settings-professional-section">
+            <div class="settings-section-kicker">Profil professionnel</div>
+            <div class="settings-field-grid-one">
+              <label class="settings-field modern-field"><span>Présentation</span><textarea name="presentation" rows="4" placeholder="Votre parcours, votre style, votre approche…">{{ utilisateur.profil_photographe.presentation or '' }}</textarea></label>
+              <label class="settings-field modern-field"><span>Spécialités</span><input name="specialites" value="{{ utilisateur.profil_photographe.specialites or '' }}" placeholder="Portrait, mariage, mode…"></label>
+              <div class="settings-field-grid-two">
+                <label class="settings-field modern-field"><span>Années d'expérience</span><div class="modern-number settings-number"><button type="button" data-step="-1">−</button><input type="number" name="annees_experience" min="0" max="60" value="{{ utilisateur.profil_photographe.annees_experience or 0 }}"><button type="button" data-step="1">+</button></div></label>
+                <label class="settings-field modern-field"><span>Tarif de départ <small>FCFA</small></span><div class="modern-number settings-number"><button type="button" data-step="-5000">−</button><input type="number" name="tarif_min" min="0" step="5000" value="{{ utilisateur.profil_photographe.tarif_min or 0 }}"><button type="button" data-step="5000">+</button></div></label>
+              </div>
+              <label class="settings-field modern-field"><span>Réseaux sociaux <small>optionnel</small></span><input name="reseaux_sociaux" value="{{ utilisateur.profil_photographe.reseaux_sociaux or '' }}" placeholder="@votre_compte"></label>
+            </div>
+          </div>
+          {% endif %}
+          <div class="settings-form-footer"><span>Vos informations sont visibles selon vos réglages de confidentialité.</span><button class="btn btn-primary settings-save" type="submit">Enregistrer les modifications <span>→</span></button></div>
+        </form>
+      </div>
+
+      {% elif section=='confidentialite' %}
+      <div class="settings-section"><h2>Confidentialité</h2><p class="settings-section-intro">Contrôlez qui peut voir votre profil et interagir avec vous.</p>
+        <form method="post" class="settings-card"><input type="hidden" name="section" value="confidentialite">
+          <label class="settings-control-row"><div><strong>Profil public</strong><small>Votre profil peut être consulté par les autres membres.</small></div><span class="switch"><input type="checkbox" name="profil_public" {% if utilisateur.profil_public %}checked{% endif %}><i></i></span></label>
+          <label class="settings-control-row"><div><strong>Commentaires</strong><small>Autoriser les commentaires sur vos publications.</small></div><span class="switch"><input type="checkbox" name="commentaires_autorises" {% if utilisateur.commentaires_autorises %}checked{% endif %}><i></i></span></label>
+          <label class="settings-control-row"><div><strong>Tags</strong><small>Autoriser les autres membres à vous identifier.</small></div><span class="switch"><input type="checkbox" name="tags_autorises" {% if utilisateur.tags_autorises %}checked{% endif %}><i></i></span></label>
+          <div class="settings-select-row"><div><strong>Qui peut me contacter ?</strong><small>Contrôlez les nouveaux messages.</small></div><select name="qui_peut_contacter" class="modern-native-select"><option value="tous" {% if utilisateur.qui_peut_contacter=='tous' %}selected{% endif %}>Tout le monde</option><option value="abonnes" {% if utilisateur.qui_peut_contacter=='abonnes' %}selected{% endif %}>Mes abonnés</option><option value="personne" {% if utilisateur.qui_peut_contacter=='personne' %}selected{% endif %}>Personne</option></select></div>
+          <button class="btn btn-primary settings-save">Enregistrer</button>
+        </form>
+      </div>
+
+      {% elif section=='notifications' %}
+      <div class="settings-section"><h2>Notifications</h2><p class="settings-section-intro">Choisissez les notifications que vous souhaitez recevoir.</p>
+        <form method="post" class="settings-card"><input type="hidden" name="section" value="notifications">
+          {% for f,label,desc in [('notif_messages','Messages','Nouveaux messages et réponses'),('notif_demandes','Demandes','Nouvelles demandes de prestation'),('notif_reservations','Réservations','Mises à jour de vos réservations'),('notif_collaborations','Collaborations','Invitations et albums collaboratifs'),('notif_interactions','Interactions','Likes et commentaires sur vos publications'),('notif_abonnes','Nouveaux abonnés','Quand quelqu’un commence à vous suivre')] %}
+          <label class="settings-control-row"><div><strong>{{ label }}</strong><small>{{ desc }}</small></div><span class="switch"><input type="checkbox" name="{{ f }}" {% if utilisateur|attr(f) %}checked{% endif %}><i></i></span></label>
+          {% endfor %}<button class="btn btn-primary settings-save">Enregistrer</button>
+        </form>
+      </div>
+
+      {% elif section=='professionnel' and utilisateur.role=='photographe' %}
+      <div class="settings-section"><h2>Compte professionnel</h2><p class="settings-section-intro">Gérez votre présence de photographe sur InstaShoot.</p>
+        <form method="post" class="settings-card"><input type="hidden" name="section" value="professionnel">
+          <label class="settings-control-row"><div><strong>Profil professionnel visible</strong><small>Apparaître dans les recherches et recommandations.</small></div><span class="switch"><input type="checkbox" name="visibilite_pro" {% if utilisateur.profil_photographe.visibilite_pro %}checked{% endif %}><i></i></span></label>
+          <div class="settings-text-row"><div><strong>Disponibilité</strong><small>Ex. Lun–Sam, 9h–18h</small></div><input name="disponibilite" value="{{ utilisateur.profil_photographe.disponibilite or '' }}"></div>
+          <button class="btn btn-primary settings-save">Enregistrer</button>
+        </form>
+      </div>
+
+      {% elif section=='securite' %}
+      <div class="settings-section">
+        <h2>Sécurité</h2><p class="settings-section-intro">Renforcez la protection de votre compte et gardez le contrôle de vos accès.</p>
+        <div class="security-grid">
+          <div class="security-card security-card-wide"><div class="security-icon">🔐</div><div><h3>Mot de passe</h3><p>Utilisez un mot de passe unique d’au moins 8 caractères. Pour le modifier, confirmez d’abord votre mot de passe actuel.</p></div><button type="button" class="btn btn-outline btn-sm" onclick="ouvrirModalMotDePasse()">Modifier</button></div>
+          <div class="security-card"><div class="security-icon">🧭</div><div><h3>Session actuelle</h3><p>Cette session est actuellement active sur cet appareil.</p><span class="security-status"><i></i> Session active</span></div></div>
+          <div class="security-card"><div class="security-icon">✉</div><div><h3>Adresse e-mail</h3><p>{{ utilisateur.email }}</p><span class="security-status"><i></i> Adresse associée au compte</span></div></div>
+          <div class="security-card security-card-wide"><div class="security-icon">🛡</div><div><h3>Bonnes pratiques</h3><ul><li>Ne partagez jamais votre mot de passe.</li><li>Évitez d’utiliser le même mot de passe sur plusieurs services.</li><li>Déconnectez-vous après avoir utilisé un appareil partagé.</li></ul></div></div>
+          <div class="security-card security-card-wide security-danger-zone"><div><h3>Zone sensible</h3><p>La suppression du compte efface définitivement vos informations et contenus associés.</p></div><button type="button" class="btn btn-danger-solid btn-sm" onclick="ouvrirModalSuppression()">Supprimer mon compte</button></div>
+        </div>
+      </div>
+      {% endif %}
+    </main>
+  </div>
+</section>
+
+<!-- Modal compte -->
+<div id="modal-compte" class="modal-overlay" onclick="if(event.target===this) fermerModal('modal-compte')"><div class="modal-box settings-modal-box"><button class="modal-close" type="button" onclick="fermerModal('modal-compte')">✕</button><div class="modal-eyebrow">COMPTE</div><h2 id="modal-compte-title">Modifier</h2><p class="modal-description">La modification est enregistrée immédiatement sur votre compte.</p><form method="post" action="{{ url_for('parametres', section='compte') }}"><input type="hidden" name="action" value="account_info"><label class="settings-field"><span id="modal-compte-label">Valeur</span><input id="modal-compte-input" name="email" required></label><div class="modal-actions"><button type="button" class="btn btn-outline" onclick="fermerModal('modal-compte')">Annuler</button><button class="btn btn-primary">Enregistrer</button></div></form></div></div>
+
+<!-- Modal mot de passe -->
+<div id="modal-mdp" class="modal-overlay" onclick="if(event.target===this) fermerModal('modal-mdp')"><div class="modal-box settings-modal-box"><button class="modal-close" type="button" onclick="fermerModal('modal-mdp')">✕</button><div class="modal-eyebrow">SÉCURITÉ</div><h2>Modifier le mot de passe</h2><p class="modal-description">Confirmez votre ancien mot de passe avant de choisir le nouveau.</p><form method="post" action="{{ url_for('parametres', section='securite') }}"><input type="hidden" name="section" value="securite"><label class="settings-field"><span>Mot de passe actuel</span><input type="password" name="mot_de_passe_actuel" required autocomplete="current-password"></label><label class="settings-field"><span>Nouveau mot de passe</span><input type="password" name="nouveau_mot_de_passe" minlength="8" required autocomplete="new-password"></label><label class="settings-field"><span>Confirmation</span><input type="password" name="confirmation_mot_de_passe" minlength="8" required autocomplete="new-password"></label><div class="modal-actions"><button type="button" class="btn btn-outline" onclick="fermerModal('modal-mdp')">Annuler</button><button class="btn btn-primary">Mettre à jour</button></div></form></div></div>
+
+<!-- Confirmation suppression -->
+<div id="modal-suppression" class="modal-overlay modal-danger-overlay" onclick="if(event.target===this) fermerModal('modal-suppression')"><div class="modal-box modal-confirm-box"><button class="modal-close" type="button" onclick="fermerModal('modal-suppression')">✕</button><div class="confirm-symbol">!</div><div class="modal-eyebrow danger">ACTION DÉFINITIVE</div><h2>Supprimer votre compte ?</h2><p>Cette action est irréversible. Votre profil, vos publications et les informations associées seront définitivement supprimés.</p><div class="confirm-note"><strong>Vous ne pourrez pas revenir en arrière.</strong><span>Prenez un instant pour vérifier que vous souhaitez réellement continuer.</span></div><div class="modal-actions"><button type="button" class="btn btn-outline" onclick="fermerModal('modal-suppression')">Annuler</button><form method="post" action="{{ url_for('supprimer_compte') }}"><button type="submit" class="btn btn-danger-solid">Supprimer définitivement</button></form></div></div></div>
+
+<!-- Confirmation déconnexion -->
+<div id="modal-deconnexion" class="modal-overlay" onclick="if(event.target===this) fermerModal('modal-deconnexion')"><div class="modal-box modal-confirm-box"><button class="modal-close" type="button" onclick="fermerModal('modal-deconnexion')">✕</button><div class="confirm-symbol neutral">↪</div><div class="modal-eyebrow">SESSION</div><h2>Se déconnecter ?</h2><p>Votre session actuelle sera fermée sur cet appareil.</p><div class="modal-actions"><button type="button" class="btn btn-outline" onclick="fermerModal('modal-deconnexion')">Rester connecté</button><a class="btn btn-primary" href="{{ url_for('deconnexion') }}">Se déconnecter</a></div></div></div>
+<script>window.pcAccountEmail={{ utilisateur.email|tojson }};window.pcAccountPhone={{ (utilisateur.telephone or '')|tojson }};window.pcAccountCity={{ (utilisateur.ville or '')|tojson }};</script>
+
+{% endblock %}

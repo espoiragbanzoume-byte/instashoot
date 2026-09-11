@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block title %}Devenir photographe — InstaShoot{% endblock %}
+{% block content %}
+<main class="pro-page">
+  <section class="pro-hero">
+    <div class="pro-hero-copy"><span class="page-kicker">ESPACE PHOTOGRAPHE</span><h1>Votre talent mérite une vraie vitrine.</h1><p>Présentez votre travail, soyez trouvé par des clients au Bénin et gérez vos demandes, devis et réservations depuis un seul espace.</p><div class="pro-hero-actions"><button type="button" class="btn btn-primary btn-large" onclick="ouvrirModalInscription('photographe')">Créer mon profil</button><a href="{{ url_for('formations') }}" class="btn btn-outline btn-large">Voir les formations</a></div></div><div class="pro-hero-card"><span class="pro-card-mark">IS</span><strong>InstaShoot</strong><p>Portfolio · Clients · Devis · Réservations</p></div>
+  </section>
+
+  <section class="pro-section"><div class="pro-section-heading"><span class="page-kicker">POURQUOI</span><h2>Tout ce qu'il faut pour passer du portfolio à l'activité.</h2></div><div class="pro-benefits"><article><span>01</span><h3>Une vitrine professionnelle</h3><p>Vos spécialités, votre univers, vos albums, vos tarifs et les avis de vos clients au même endroit.</p></article><article><span>02</span><h3>Des demandes qualifiées</h3><p>Les clients peuvent vous trouver par ville et par prestation, puis vous envoyer une demande de devis structurée.</p></article><article><span>03</span><h3>Un suivi simple</h3><p>Messages, devis, réservations et prochaines prestations restent organisés dans votre espace.</p></article></div></section>
+
+  <section class="pro-process"><div><span class="page-kicker">COMMENT ÇA SE PASSE</span><h2>Trois étapes pour commencer.</h2></div><div class="pro-process-list"><div><b>1</b><div><h3>Créez votre profil</h3><p>Ajoutez votre ville, vos spécialités et présentez votre approche.</p></div></div><div><b>2</b><div><h3>Construisez votre vitrine</h3><p>Publiez vos images et organisez vos meilleurs travaux dans des albums.</p></div></div><div><b>3</b><div><h3>Recevez et gérez vos demandes</h3><p>Échangez avec les clients, envoyez vos devis et confirmez vos réservations.</p></div></div></div></section>
+
+  <section class="pro-learning"><div><span class="page-kicker">POUR PROGRESSER</span><h2>Une activité solide commence aussi par la formation.</h2><p>Retrouvez des ressources autour de la prise de vue, du portfolio, de la relation client et du développement de votre activité.</p></div><a href="{{ url_for('formations') }}" class="btn btn-primary">Explorer les formations →</a></section>
+  <section class="cta-bottom pro-cta"><span class="page-kicker">PRÊT À COMMENCER ?</span><h2>Faites découvrir votre regard.</h2><p>La création de votre profil prend quelques minutes.</p><button type="button" class="btn btn-primary btn-large" onclick="ouvrirModalInscription('photographe')">Créer mon profil photographe</button></section>
+</main>
+{% endblock %}

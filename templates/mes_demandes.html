@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+{% block title %}Mes demandes — InstaShoot{% endblock %}
+{% block content %}
+<section class="requests-page">
+  <header class="requests-header">
+    <div><span class="page-kicker">SUIVI</span><h1>Mes demandes</h1><p>Suivez chaque prestation, de votre première demande à la séance.</p></div>
+    <div class="requests-summary"><strong>{{ demandes|length }}</strong><span>demande{{ 's' if demandes|length != 1 else '' }}</span></div>
+  </header>
+
+  <nav class="demandes-toolbar" aria-label="Filtrer les demandes">
+    {% for value,label in [('toutes','Toutes'),('en_attente','En attente'),('discussion','Devis'),('acceptee','Réservées'),('refusee','Refusées'),('terminee','Terminées')] %}
+      <a href="{{ url_for('mes_demandes',statut=value) }}" class="request-filter {% if filtre==value %}active{% endif %}">{{ label }}</a>
+    {% endfor %}
+  </nav>
+
+  <div class="requests-list">
+  {% for d in demandes %}
+    <article class="demande-card">
+      <div class="demande-header">
+        <div class="request-person">
+          {% set personne = d.client if role=='photographe' else d.photographe %}
+          {% if personne.avatar_url %}<img src="{{ personne.avatar_url }}" alt="{{ personne.nom }}">{% else %}<span>{{ personne.nom[:1]|upper }}</span>{% endif %}
+          <div><h2>{{ personne.nom }}</h2><p>{{ d.type_prestation or 'Prestation' }}{% if d.date_prestation %} · {{ d.date_prestation }}{% endif %}</p></div>
+        </div>
+        <span class="pc-status pc-status-{{ d.statut }}">{{ d.statut|replace('_',' ')|capitalize }}</span>
+      </div>
+
+      <div class="request-body">
+        <div class="request-progress" aria-label="Progression de la demande">
+          {% for step in [('en_attente','Demande'),('discussion','Devis'),('acceptee','Réservation'),('terminee','Séance')] %}
+            <span class="request-step {% if d.statut==step[0] %}current{% elif (step[0]=='en_attente' and d.statut in ['discussion','acceptee','terminee']) or (step[0]=='discussion' and d.statut in ['acceptee','terminee']) or (step[0]=='acceptee' and d.statut=='terminee') %}done{% endif %}"><i></i>{{ step[1] }}</span>
+          {% endfor %}
+        </div>
+        <details class="demande-details"><summary>Voir les détails</summary><div class="request-detail-grid"><p><small>Message</small>{{ d.message or 'Aucun message' }}</p><p><small>Budget annoncé</small>{{ d.budget ~ ' FCFA' if d.budget else 'Non précisé' }}</p>{% if d.devis %}<p><small>Devis proposé</small><strong>{{ d.devis }} FCFA</strong></p>{% endif %}</div></details>
+      </div>
+
+      {% if role=='photographe' %}
+      <div class="demande-actions">
+        <a href="{{ url_for('messagerie',avec=d.client.id) }}" class="btn btn-outline btn-sm">Discuter</a>
+        {% if d.statut in ['en_attente','discussion'] %}
+        <form class="quote-form" method="post" action="{{ url_for('envoyer_devis',reservation_id=d.id) }}"><label class="sr-only" for="devis-{{ d.id }}">Montant du devis</label><input id="devis-{{ d.id }}" class="quote-input" type="number" name="devis" min="1" step="5000" placeholder="Montant du devis" required><button class="btn btn-primary btn-sm quote-send" type="submit">Envoyer le devis</button></form>
+        {% endif %}
+        {% if d.statut=='en_attente' %}
+          <form method="post" action="{{ url_for('modifier_statut_demande',reservation_id=d.id) }}"><input type="hidden" name="statut" value="acceptee"><button class="btn btn-success-solid btn-sm" type="submit">Accepter</button></form>
+          <form method="post" action="{{ url_for('modifier_statut_demande',reservation_id=d.id) }}"><input type="hidden" name="statut" value="refusee"><button class="btn btn-danger-solid btn-sm" type="submit">Refuser</button></form>
+        {% endif %}
+        {% if d.statut=='acceptee' %}
+          <form method="post" action="{{ url_for('modifier_statut_demande',reservation_id=d.id) }}"><input type="hidden" name="statut" value="terminee"><button class="btn btn-outline btn-sm" type="submit">Marquer terminée</button></form>
+        {% endif %}
+      </div>
+      {% else %}
+      <div class="demande-actions client-request-actions">
+        <a href="{{ url_for('messagerie',avec=d.photographe.id) }}" class="btn btn-outline btn-sm">Discuter avec le photographe</a>
+        {% if d.devis and d.statut=='discussion' %}<form method="post" action="{{ url_for('modifier_statut_demande',reservation_id=d.id) }}"><input type="hidden" name="statut" value="acceptee"><button class="btn btn-primary btn-sm" type="submit">Accepter le devis</button></form>{% endif %}
+      </div>
+      {% endif %}
+    </article>
+  {% else %}
+    <div class="requests-empty"><div>✦</div><h2>Aucune demande ici</h2><p>Vos demandes de prestation apparaîtront dans cet espace.</p><a href="{{ url_for('photographes') }}" class="btn btn-primary">Découvrir les photographes</a></div>
+  {% endfor %}
+  </div>
+</section>
+{% endblock %}

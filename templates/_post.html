@@ -1,0 +1,85 @@
+<article class="pc-post-card inspiration-post" id="publication-{{ pub.id }}">
+  <header class="pc-post-head">
+    <a class="pc-post-author-link" href="{{ url_for('profil_photographe', photographe_id=pub.auteur.id) }}" aria-label="Voir le profil de {{ pub.auteur.nom }}">
+      {% if pub.auteur.avatar_url %}
+        <img src="{{ pub.auteur.avatar_url }}" class="pc-post-avatar" alt="{{ pub.auteur.nom }}">
+      {% else %}
+        <div class="pc-post-avatar pc-avatar-letter">{{ pub.auteur.nom[:1]|upper }}</div>
+      {% endif %}
+    </a>
+    <div class="pc-post-author">
+      <a href="{{ url_for('profil_photographe', photographe_id=pub.auteur.id) }}"><strong>{{ pub.auteur.nom }}</strong></a>
+      <small>{{ pub.created_at.strftime('%d/%m/%Y à %H:%M') }}</small>
+    </div>
+    <a class="pc-post-more" href="{{ url_for('voir_publication', publication_id=pub.id) }}" aria-label="Ouvrir la publication">•••</a>
+  </header>
+
+  {% if pub.album and pub.album.photos %}
+    <div class="pc-carousel" data-carousel="{{ pub.id }}">
+      <div class="pc-carousel-track">
+        {% for photo in pub.album.photos %}
+          <div class="pc-carousel-slide {% if loop.first %}active{% endif %}">
+            <img src="{{ photo.image_url }}" alt="Publication de {{ pub.auteur.nom }} — photo {{ loop.index }}" loading="lazy">
+          </div>
+        {% endfor %}
+      </div>
+      {% if pub.album.photos|length > 1 %}
+        <button type="button" class="pc-carousel-arrow prev" onclick="carouselAlbum('{{ pub.id }}',-1)" aria-label="Photo précédente">‹</button>
+        <button type="button" class="pc-carousel-arrow next" onclick="carouselAlbum('{{ pub.id }}',1)" aria-label="Photo suivante">›</button>
+        <div class="pc-carousel-dots">
+          {% for photo in pub.album.photos %}
+            <button type="button" class="pc-carousel-dot {% if loop.first %}active{% endif %}" onclick="allerPhotoAlbum('{{ pub.id }}',{{ loop.index0 }})" aria-label="Photo {{ loop.index }}"></button>
+          {% endfor %}
+        </div>
+        <span class="pc-carousel-count">1 / {{ pub.album.photos|length }}</span>
+      {% endif %}
+    </div>
+  {% else %}
+    <a href="{{ url_for('voir_publication', publication_id=pub.id) }}" class="pc-post-image-link">
+      <img src="{{ pub.image_url }}" alt="{{ pub.legende or 'Publication de ' ~ pub.auteur.nom }}" class="pc-post-image" loading="lazy">
+    </a>
+  {% endif %}
+
+  <div class="pc-post-actions" aria-label="Actions de publication">
+    <form method="post" data-ajax-interaction action="{{ url_for('liker_publication', publication_id=pub.id) }}">
+      <button class="pc-action {{ 'active' if utilisateur_courant and pub.est_aimee_par(utilisateur_courant.id) else '' }}" title="J'aime" aria-label="J'aime">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.8 8.7c0 5.5-8.8 10.3-8.8 10.3S3.2 14.2 3.2 8.7A4.7 4.7 0 0 1 12 6.2a4.7 4.7 0 0 1 8.8 2.5Z"/></svg><span>{{ pub.nb_likes() }}</span>
+      </button>
+    </form>
+    <a class="pc-action" href="{{ url_for('voir_publication', publication_id=pub.id) }}" title="Commentaires" aria-label="Commentaires">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 11.5a8 8 0 0 1-8 8 8.7 8.7 0 0 1-3.7-.8L4 20l1.3-3.4A8 8 0 1 1 20 11.5Z"/></svg><span>{{ pub.nb_commentaires() }}</span>
+    </a>
+    <button type="button" class="pc-action pc-share-button" title="Partager" aria-label="Partager" onclick="partagerPublication('{{ pub.id }}','{{ url_for('voir_publication', publication_id=pub.id, _external=True) }}','{{ pub.legende|e if pub.legende else pub.auteur.nom|e }}')">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M22 2 11 13"/><path d="m22 2-7 20-4-9-9-4Z"/></svg>
+    </button>
+    <form method="post" data-ajax-interaction action="{{ url_for('reposter_publication', publication_id=pub.id) }}">
+      <button class="pc-action {{ 'active' if utilisateur_courant and pub.reposts|selectattr('utilisateur_id','equalto',utilisateur_courant.id)|list else '' }}" title="Republication" aria-label="Republication">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M17 2l3 3-3 3"/><path d="M20 5H7a4 4 0 0 0-4 4"/><path d="M7 22l-3-3 3-3"/><path d="M4 19h13a4 4 0 0 0 4-4"/></svg><span>{{ pub.nb_reposts() }}</span>
+      </button>
+    </form>
+    <form method="post" data-ajax-interaction action="{{ url_for('enregistrer_publication', publication_id=pub.id) }}" class="pc-save-form">
+      <button class="pc-action pc-save-button {{ 'active' if utilisateur_courant and pub.est_enregistree_par(utilisateur_courant.id) else '' }}" title="Enregistrer" aria-label="Enregistrer">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3.5h12v17l-6-3.5-6 3.5Z"/></svg>
+      </button>
+    </form>
+  </div>
+
+  {% if pub.legende %}
+    <p class="pc-post-caption"><strong>{{ pub.auteur.nom }}</strong> {{ pub.legende }}</p>
+  {% elif pub.album %}
+    <p class="pc-post-caption"><strong>{{ pub.auteur.nom }}</strong>{% if pub.album.categorie %} · {{ pub.album.categorie }}{% endif %}</p>
+  {% endif %}
+
+  {% if pub.commentaires %}
+    <div class="pc-comments">
+      {% for c in pub.commentaires[-3:] %}<p><strong>{{ c.utilisateur.nom }}</strong> {{ c.contenu }}</p>{% endfor %}
+    </div>
+  {% endif %}
+
+  {% if utilisateur_courant %}
+    <form class="pc-comment-form" data-ajax-interaction method="post" action="{{ url_for('commenter_publication', publication_id=pub.id) }}">
+      <input name="contenu" placeholder="Ajouter un commentaire…" maxlength="500">
+      <button>Publier</button>
+    </form>
+  {% endif %}
+</article>

@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block title %}{{ titre }} — InstaShoot{% endblock %}
+{% block content %}
+<main class="legal-page">
+  <header class="legal-hero"><span class="page-kicker">INSTASHOOT</span><h1>{{ titre }}</h1><p>Dernière mise à jour : 11 septembre 2026</p></header>
+  <article class="legal-card">
+    {% if titre == "Conditions d'utilisation" %}
+      <h2>1. Objet du service</h2><p>InstaShoot est une plateforme de mise en relation entre clients et photographes. Elle permet notamment de découvrir des profils, consulter des portfolios, échanger, demander un devis et suivre une réservation.</p>
+      <h2>2. Comptes et informations</h2><p>Chaque utilisateur s'engage à fournir des informations exactes et à maintenir son compte sécurisé. Un profil professionnel doit présenter une activité réelle et des informations qui permettent aux clients de comprendre le service proposé.</p>
+      <h2>3. Prestations et paiements</h2><p>Les échanges, devis, prix, disponibilités et conditions d'une prestation sont convenus entre le client et le photographe. InstaShoot facilite la mise en relation et le suivi des demandes ; sauf indication contraire affichée sur la plateforme, la prestation est conclue directement entre les parties.</p>
+      <h2>4. Contenus</h2><p>L'utilisateur reste responsable des photos, textes et informations qu'il publie. Il doit disposer des droits nécessaires pour les utiliser et ne pas publier de contenu illégal, trompeur ou portant atteinte aux droits d'autrui.</p>
+      <h2>5. Comportement</h2><p>Les utilisateurs doivent respecter les autres membres, ne pas utiliser la plateforme pour du spam, de la fraude, du harcèlement ou des demandes sans rapport avec les services proposés.</p>
+      <h2>6. Évolution du service</h2><p>InstaShoot peut faire évoluer ses fonctionnalités, son interface ou ses règles pour améliorer le service et sa sécurité. Les utilisateurs seront informés des changements importants lorsqu'ils nécessitent une action.</p>
+      <h2>7. Contact</h2><p>Pour toute question concernant l'utilisation de la plateforme, consultez la page <a href="{{ url_for('contact') }}">Contact / Aide</a>.</p>
+    {% else %}
+      <h2>1. Données utilisées</h2><p>InstaShoot peut traiter les informations nécessaires au fonctionnement du compte : nom, adresse e-mail, téléphone, ville, rôle, informations professionnelles, contenus publiés et données liées aux demandes, messages et réservations.</p>
+      <h2>2. Pourquoi ces données sont utilisées</h2><p>Elles servent notamment à créer et gérer votre compte, afficher votre profil, permettre la recherche de photographes et d'utilisateurs, traiter les demandes de devis, assurer la messagerie et améliorer la sécurité du service.</p>
+      <h2>3. Visibilité</h2><p>Les informations d'un profil public peuvent être visibles par les autres utilisateurs. Les contenus publiés sur la plateforme peuvent également être consultables selon les paramètres et fonctionnalités disponibles.</p>
+      <h2>4. Conservation et sécurité</h2><p>Nous cherchons à conserver les données uniquement aussi longtemps que nécessaire au fonctionnement du service et à appliquer des mesures raisonnables pour protéger les comptes et les informations.</p>
+      <h2>5. Vos choix</h2><p>Vous pouvez modifier les informations de votre profil depuis les paramètres lorsqu'une fonctionnalité correspondante est disponible. Vous pouvez également demander de l'aide via la page Contact / Aide.</p>
+      <h2>6. Évolution de cette politique</h2><p>Cette politique peut être mise à jour lorsque le service évolue. La date affichée en haut de page permet d'identifier la version présentée.</p>
+      <h2>7. Contact</h2><p>Pour toute question relative à vos données ou à cette politique, utilisez la page <a href="{{ url_for('contact') }}">Contact / Aide</a>.</p>
+    {% endif %}
+  </article>
+</main>
+{% endblock %}

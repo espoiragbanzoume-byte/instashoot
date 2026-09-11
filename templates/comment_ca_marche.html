@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+
+{% block title %}Comment ça marche — InstaShoot{% endblock %}
+
+{% block content %}
+
+  <section class="hero">
+    <h1>Comment fonctionne InstaShoot ?</h1>
+    <p>De la recherche à la séance photo, tout se passe au même endroit.</p>
+  </section>
+
+  <section class="video-placeholder-wrap">
+    <div class="video-placeholder">
+      <p>🎬 Vidéo explicative à venir</p>
+    </div>
+  </section>
+
+  <section class="how-it-works">
+    <div class="steps">
+      <div class="step">
+        <span class="step-number">1</span>
+        <h3>Recherchez</h3>
+        <p>Indiquez votre ville et le type de prestation recherché (mariage, portrait, événementiel...).</p>
+      </div>
+      <div class="step">
+        <span class="step-number">2</span>
+        <h3>Comparez</h3>
+        <p>Consultez portfolios en albums, tarifs, avis et disponibilités de plusieurs photographes.</p>
+      </div>
+      <div class="step">
+        <span class="step-number">3</span>
+        <h3>Contactez</h3>
+        <p>Demandez un devis directement au photographe qui vous convient.</p>
+      </div>
+      <div class="step">
+        <span class="step-number">4</span>
+        <h3>Réservez</h3>
+        <p>Confirmez votre séance et retrouvez vos échanges dans votre espace personnel.</p>
+      </div>
+    </div>
+    <a href="{{ url_for('photographes') }}" class="btn btn-outline btn-sm">En savoir plus</a>
+  </section>
+
+  <section class="cta-bottom">
+    <h2>Prêt à trouver votre photographe ?</h2>
+    <a href="{{ url_for('photographes') }}" class="btn btn-primary btn-large">Voir les photographes</a>
+  </section>
+
+{% endblock %}

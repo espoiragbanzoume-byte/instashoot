@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+
+{% block title %}Photographes — InstaShoot{% endblock %}
+
+{% block content %}
+
+  <section class="results">
+    <h1>Tous les photographes</h1>
+
+    <form class="search-bar-wrap" action="{{ url_for('photographes') }}" method="get">
+      <div class="search-bar">
+        <input type="text" name="q" placeholder="Rechercher un photographe, une ville, un style..." value="{{ mot_cle }}">
+        <button type="submit" class="btn btn-primary">Rechercher</button>
+        <button type="button" class="btn btn-outline" onclick="document.getElementById('filtres-photographes').classList.toggle('ouvert')">Filtres</button>
+      </div>
+      <div id="filtres-photographes" class="filtres-panel {{ 'ouvert' if ville or type_prestation else '' }}">
+        <select name="ville" class="modern-native-select"><option value="">Toutes les villes</option>{% for option in villes_disponibles %}<option value="{{ option }}" {{ 'selected' if ville == option else '' }}>{{ option }}</option>{% endfor %}</select>
+        <select name="type" class="modern-native-select">
+          <option value="">Type de prestation</option>
+          {% for option in ['Mariage', 'Portrait', 'Événementiel', 'Mode', 'Grossesse', 'Produits'] %}
+            <option value="{{ option }}" {{ 'selected' if type_prestation == option else '' }}>{{ option }}</option>
+          {% endfor %}
+        </select>
+      </div>
+    </form>
+
+    {% if resultats %}
+      <div class="results-grid">
+        {% for p in resultats %}
+          <a href="{{ url_for('profil_photographe', photographe_id=p.id) }}" class="result-card">
+            {% if p.avatar_url %}
+              <img src="{{ p.avatar_url }}" class="result-avatar-img" alt="{{ p.nom }}">
+            {% else %}
+              <div class="result-avatar"></div>
+            {% endif %}
+            <div class="result-info">
+              <h3>{{ p.nom }}</h3>
+              <p class="result-meta">📍 {{ p.ville }}</p>
+              <p class="result-note">⭐ {{ p.profil_photographe.note_moyenne }}/5</p>
+              <div class="result-tags">
+                {% for s in p.profil_photographe.liste_specialites() %}
+                  <span class="tag">{{ s }}</span>
+                {% endfor %}
+              </div>
+              <p class="result-tarif">À partir de {{ p.profil_photographe.tarif_min }} FCFA</p>
+            </div>
+          </a>
+        {% endfor %}
+      </div>
+    {% else %}
+      <p class="empty-state">Aucun photographe ne correspond à ta recherche.</p>
+    {% endif %}
+  </section>
+
+{% endblock %}

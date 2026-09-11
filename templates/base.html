@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}InstaShoot{% endblock %}</title>
+  <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='favicon.svg') }}">
+  <link rel="apple-touch-icon" href="{{ url_for('static', filename='favicon.svg') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+
+  <header class="navbar">
+    <div class="navbar-inner">
+      <a href="{{ url_for('accueil') }}" class="logo" aria-label="InstaShoot accueil">
+        <span class="logo-mark">IS</span><span>InstaShoot</span>
+      </a>
+      <nav class="main-nav" aria-label="Navigation principale">
+        {% if utilisateur_courant %}
+          <details class="nav-dropdown">
+            <summary>Découvrir</summary>
+            <div class="nav-menu">
+              <a href="{{ url_for('photographes') }}"><span class="menu-icon">✦</span><span><strong>Photographes</strong><small>Trouver un prestataire</small></span></a>
+              <a href="{{ url_for('inspiration') }}"><span class="menu-icon">◈</span><span><strong>Inspiration</strong><small>Explorer les créations</small></span></a>
+              <a href="{{ url_for('comment_ca_marche') }}"><span class="menu-icon">?</span><span><strong>Comment ça marche</strong><small>Découvrir InstaShoot</small></span></a>
+              {% if utilisateur_courant.role == 'photographe' %}<a href="{{ url_for('formations') }}"><span class="menu-icon">✦</span><span><strong>Formations</strong><small>Progresser comme photographe</small></span></a>{% endif %}
+            </div>
+          </details>
+          {% if utilisateur_courant.role == 'photographe' %}
+            <a href="{{ url_for('mes_demandes') }}" class="nav-link nav-desktop-link">Demandes</a>
+          {% endif %}
+          <div class="nav-actions">
+            <a href="{{ url_for('messagerie') }}" class="nav-action" title="Messages" aria-label="Messages">💬{% if messages_non_lus %}<span class="nav-badge">{{ messages_non_lus }}</span>{% endif %}</a>
+            <div class="notif-wrap">
+              <button type="button" id="bouton-notifications" class="nav-action nav-icon-btn nav-badge-wrap" title="Notifications" aria-label="Notifications" onclick="basculerPanneauNotifications(event)"><svg class="nav-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4"/></svg>{% if notifications_non_lues %}<span class="nav-badge">{{ notifications_non_lues }}</span>{% endif %}</button>
+              <div id="panneau-notifications" class="notif-panel">
+                <div class="notif-panel-head"><h3>Notifications</h3>{% if notifications_non_lues %}<span class="notif-unread-label">{{ notifications_non_lues }} non lue{{ 's' if notifications_non_lues > 1 else '' }}</span>{% endif %}</div>
+                {% if notifications_recentes %}
+                  <div class="notif-mini-list">
+                  {% for n in notifications_recentes %}
+                    <form method="post" action="{{ url_for('lire_notification', notification_id=n.id) }}" class="notif-mini {{ 'unread' if not n.lu else '' }}">
+                      <button type="submit"><span class="notif-mini-dot">{% if not n.lu %}•{% endif %}</span><span><strong>{{ n.titre }}</strong><small>{{ n.contenu or '' }}</small><em>{{ n.created_at.strftime('%d/%m à %H:%M') }}</em></span></button>
+                    </form>
+                  {% endfor %}
+                  </div>
+                {% else %}<p class="notif-empty">Aucune notification pour le moment.</p>{% endif %}
+                <div class="notif-panel-footer"><a href="{{ url_for('notifications') }}">Voir toutes les notifications</a>{% if notifications_non_lues %}<form method="post" action="{{ url_for('lire_toutes_notifications') }}"><button type="submit">Tout marquer comme lu</button></form>{% endif %}</div>
+              </div>
+            </div>
+            <details class="profile-menu">
+              <summary class="profile-trigger">
+                {% if utilisateur_courant.avatar_url %}<img src="{{ utilisateur_courant.avatar_url }}" class="avatar-circle" alt="">{% else %}<span class="avatar-circle">{{ utilisateur_courant.nom[:1]|upper }}</span>{% endif %}
+                <span class="profile-trigger-name">{{ utilisateur_courant.nom.split(' ')[0] }}</span>
+              </summary>
+              <div class="profile-dropdown">
+                <div class="profile-dropdown-head"><strong>{{ utilisateur_courant.nom }}</strong><small>{{ 'Photographe' if utilisateur_courant.role == 'photographe' else 'Client' }}</small></div>
+                <a href="{{ url_for('mon_profil') }}">Mon profil</a>
+                <a href="{{ url_for('parametres') }}">Paramètres</a>
+                <a href="{{ url_for('notifications') }}">Notifications{% if notifications_non_lues %}<b>{{ notifications_non_lues }}</b>{% endif %}</a>
+                <a href="{{ url_for('messagerie') }}">Messages{% if messages_non_lus %}<b>{{ messages_non_lus }}</b>{% endif %}</a>
+                <div class="menu-separator"></div>
+                <button type="button" class="logout-menu logout-menu-neutral" onclick="ouvrirModalDeconnexion()"><span class="logout-menu-icon">↪</span><span>Se déconnecter</span></button>
+              </div>
+            </details>
+          </div>
+        {% else %}
+          <a href="{{ url_for('photographes') }}" class="nav-link">Photographes</a>
+          <a href="{{ url_for('inspiration') }}" class="nav-link">Inspiration</a>
+          <a href="{{ url_for('comment_ca_marche') }}" class="nav-link">Comment ça marche</a>
+          <a href="{{ url_for('devenir_photographe') }}" class="nav-link">Devenir photographe</a>
+          <button type="button" class="btn btn-outline" onclick="ouvrirModalConnexion()">Connexion</button>
+          <button type="button" class="btn btn-primary" onclick="ouvrirModalInscription()">Inscription</button>
+        {% endif %}
+      </nav>
+      <button class="mobile-menu-toggle" type="button" aria-label="Ouvrir le menu" onclick="document.body.classList.toggle('mobile-nav-open')">☰</button>
+    </div>
+  </header>
+
+  <div id="modal-connexion-overlay" class="modal-overlay" onclick="if (event.target === this) fermerModalConnexion()">
+    <div class="modal-box">
+      <button type="button" class="modal-close" onclick="fermerModalConnexion()">✕</button>
+      <h2>Se connecter</h2>
+      <p id="modal-connexion-erreur" class="auth-message" style="display:none; background:#f6d6d6;"></p>
+      <form id="modal-connexion-form" class="auth-form" onsubmit="return soumettreConnexionModal(event)">
+        <label>Email</label>
+        <input type="email" name="email" required>
+        <label>Mot de passe</label>
+        <input type="password" name="mot_de_passe" required>
+        <button type="submit" class="btn btn-primary">Se connecter</button>
+      </form>
+      <p class="auth-switch">Pas encore de compte ? <a href="#" onclick="fermerModalConnexion(); ouvrirModalInscription(); return false;">S'inscrire</a></p>
+    </div>
+  </div>
+
+  <div id="modal-inscription-overlay" class="modal-overlay" onclick="if (event.target === this) fermerModalInscription()">
+    <div class="modal-box modal-box-large">
+      <button type="button" class="modal-close" onclick="fermerModalInscription()">✕</button>
+      <h2>Créer un compte</h2>
+      <p id="modal-inscription-erreur" class="auth-message" style="display:none; background:#f6d6d6;"></p>
+
+      <div class="role-toggle">
+        <button type="button" id="modal-role-client" class="role-btn active" onclick="choisirRoleModal('client')">Je suis client</button>
+        <button type="button" id="modal-role-photographe" class="role-btn" onclick="choisirRoleModal('photographe')">Je suis photographe</button>
+      </div>
+
+      <form id="modal-inscription-form" class="auth-form auth-modern-form" onsubmit="return soumettreInscriptionModal(event)">
+        <input type="hidden" name="role" id="modal-inscription-role" value="client">
+        <div class="form-section-label">Informations essentielles</div>
+        <div class="auth-field-grid">
+          <label><span>Nom complet</span><input type="text" name="nom" required autocomplete="name" placeholder="Votre nom et prénom"></label>
+          <label><span>Email</span><input type="email" name="email" required autocomplete="email" placeholder="vous@exemple.com"></label>
+          <label><span>Téléphone</span><input type="tel" name="telephone" class="pc-phone" autocomplete="tel" inputmode="tel" placeholder="Numéro de téléphone"></label>
+          <label><span>Ville</span><input type="text" name="ville" autocomplete="address-level2" list="pc-villes-list" placeholder="Choisir une ville"></label>
+        </div>
+        <label><span>Mot de passe</span><input type="password" name="mot_de_passe" required minlength="8" autocomplete="new-password" placeholder="8 caractères minimum"></label>
+        <div id="modal-champs-photographe" class="signup-pro-fields" style="display:none;">
+          <div class="form-section-label pro-section-label">Votre activité professionnelle</div>
+          <div class="pc-specialties-field" data-specialties-picker>
+            <span class="pc-field-label">Spécialités</span>
+            <div class="pc-specialties-picker">
+              <button type="button" class="pc-specialties-trigger" aria-haspopup="listbox" aria-expanded="false">
+                <span class="pc-specialties-label">Choisir vos spécialités</span>
+              </button>
+              <div class="pc-specialties-menu" role="listbox" aria-multiselectable="true">
+                {% for specialite in ['Mariage', 'Portrait', 'Événementiel', 'Mode', 'Grossesse', 'Produits', 'Corporate', 'Sport', 'Lifestyle', 'Photo scolaire', 'Immobilier', 'Nature'] %}
+                <label class="pc-specialty-option">
+                  <input type="checkbox" value="{{ specialite }}">
+                  <span>{{ specialite }}</span>
+                  <b aria-hidden="true">✓</b>
+                </label>
+                {% endfor %}
+              </div>
+              <input type="hidden" name="specialites" class="pc-specialties-value" value="">
+            </div>
+            <small class="pc-specialties-hint">Choisissez jusqu’à 3 spécialités.</small>
+          </div>
+          <label><span>Présentation</span><textarea name="presentation" rows="4" placeholder="Parlez de votre parcours, votre style et votre approche…"></textarea></label>
+          <div class="auth-field-grid">
+            <label><span>Années d'expérience</span><div class="modern-number auth-number"><button type="button" data-step="-1">−</button><input type="number" name="annees_experience" min="0" max="60" value="0"><button type="button" data-step="1">+</button></div></label>
+            <label><span>Tarif de départ (FCFA)</span><div class="modern-number auth-number"><button type="button" data-step="-5000">−</button><input type="number" name="tarif_min" min="0" step="5000" placeholder="50000"><button type="button" data-step="5000">+</button></div></label>
+          </div>
+          <label><span>Réseaux sociaux <small>(optionnel)</small></span><input type="text" name="reseaux_sociaux" placeholder="@votre_compte"></label>
+        </div>
+        <button type="submit" class="btn btn-primary auth-submit">Créer mon compte <span>→</span></button>
+      </form>
+
+      <datalist id="pc-villes-list">
+        <option value="Cotonou"><option value="Abomey-Calavi"><option value="Porto-Novo"><option value="Ouidah"><option value="Parakou"><option value="Abomey"><option value="Bohicon"><option value="Djougou"><option value="Natitingou"><option value="Lokossa"><option value="Savalou"><option value="Kandi"><option value="Malanville"><option value="Sakété"><option value="Aplahoué"><option value="Comè"><option value="Grand-Popo">
+      </datalist>
+
+      <p class="auth-switch">Déjà un compte ? <a href="#" onclick="fermerModalInscription(); ouvrirModalConnexion(); return false;">Se connecter</a></p>
+    </div>
+  </div>
+
+  <div id="modal-deconnexion-global" class="modal-overlay" onclick="if(event.target===this) fermerModal('modal-deconnexion-global')">
+    <div class="modal-box modal-confirm-box logout-confirm-box">
+      <button class="modal-close" type="button" onclick="fermerModal('modal-deconnexion-global')">✕</button>
+      <div class="confirm-symbol neutral">↪</div>
+      <div class="modal-eyebrow">SESSION</div>
+      <h2>Quitter InstaShoot ?</h2>
+      <p>Votre session sera fermée sur cet appareil. Vous pourrez vous reconnecter à tout moment.</p>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-outline" onclick="fermerModal('modal-deconnexion-global')">Rester connecté</button>
+        <form method="post" action="{{ url_for('deconnexion') }}"><button type="submit" class="btn btn-primary">Se déconnecter</button></form>
+      </div>
+    </div>
+  </div>
+
+  <div id="modal-recherche-accueil" class="modal-overlay" onclick="if(event.target===this) fermerModal('modal-recherche-accueil')">
+    <div class="modal-box search-modal-box">
+      <button type="button" class="modal-close" onclick="fermerModal('modal-recherche-accueil')">✕</button>
+      <div class="modal-eyebrow">EXPLORER INSTASHOOT</div>
+      <h2>Rechercher une photo</h2>
+      <p class="modal-description">Mots-clés, ville et type de prestation dans une recherche simple.</p>
+      <form action="{{ url_for('accueil') }}" method="get" class="search-modal-form">
+        <label>Mot-clé</label><input id="home-search-q" type="text" name="q" placeholder="portrait, mariage, studio…" value="{{ mot_cle if mot_cle is defined else '' }}" autocomplete="off">
+        <div class="search-modal-grid"><label>Ville<select name="ville" class="modern-native-select"><option value="">Toutes les villes</option>{% for option in villes_disponibles %}<option value="{{ option }}" {{ 'selected' if ville is defined and ville == option else '' }}>{{ option }}</option>{% endfor %}</select></label><label>Type de prestation<select name="type" class="modern-native-select"><option value="">Toutes les prestations</option>{% for option in prestations_disponibles %}<option value="{{ option }}" {{ 'selected' if type_prestation is defined and type_prestation == option else '' }}>{{ option }}</option>{% endfor %}</select></label></div>
+        <div class="modal-actions"><button type="button" class="btn btn-outline" onclick="fermerModal('modal-recherche-accueil')">Annuler</button><button class="btn btn-primary">Rechercher</button></div>
+      </form>
+    </div>
+  </div>
+
+  {% block content %}{% endblock %}
+
+  <footer class="footer footer-modern">
+    <div class="footer-content">
+      <div class="footer-col">
+        <p class="footer-logo"><span class="footer-logo-mark">IS</span><span>InstaShoot</span></p>
+        <p>La marketplace des photographes au Bénin.</p>
+      </div>
+      <div class="footer-col">
+        <a href="{{ url_for('cgu') }}">Conditions d'utilisation</a>
+        <a href="{{ url_for('confidentialite') }}">Politique de confidentialité</a>
+        <a href="{{ url_for('contact') }}">Contact / Aide</a>
+      </div>
+      <div class="footer-col footer-social">
+        <a href="{{ url_for('contact') }}">Instagram</a>
+        <a href="{{ url_for('contact') }}">Facebook</a>
+        <a href="{{ url_for('contact') }}">TikTok</a>
+      </div>
+    </div>
+    <p class="footer-copyright">&copy; 2026 InstaShoot — Bénin</p>
+  </footer>
+
+  <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+</html>

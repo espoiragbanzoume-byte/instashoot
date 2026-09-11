@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+{% block title %}Inscription — InstaShoot{% endblock %}
+{% block content %}
+<section class="auth-page-modern">
+  <div class="auth-modern auth-modern-page">
+    <div class="auth-brand">
+      <span class="logo-mark">IS</span>
+      <div><strong>InstaShoot</strong><small>Créez votre espace photo</small></div>
+    </div>
+    <div class="auth-heading">
+      <div class="modal-eyebrow">BIENVENUE</div>
+      <h1>Créer un compte</h1>
+      <p>Rejoignez InstaShoot pour découvrir, partager et réserver des expériences photo.</p>
+    </div>
+    {% if message %}<p class="auth-message">{{ message }}</p>{% endif %}
+
+    <div class="role-toggle role-toggle-modern">
+      <a href="{{ url_for('inscription', role='client') }}" class="role-btn {{ 'active' if role == 'client' else '' }}">
+        <span class="role-icon">◌</span><span><strong>Je suis client</strong><small>Découvrir et réserver</small></span>
+      </a>
+      <a href="{{ url_for('inscription', role='photographe') }}" class="role-btn {{ 'active' if role == 'photographe' else '' }}">
+        <span class="role-icon">✦</span><span><strong>Je suis photographe</strong><small>Présenter mon travail</small></span>
+      </a>
+    </div>
+
+    <form class="auth-form auth-modern-form" method="post">
+      <input type="hidden" name="role" value="{{ role }}">
+      <div class="form-section-label">Informations essentielles</div>
+      <div class="auth-field-grid">
+        <label><span>Nom complet</span><input type="text" name="nom" required autocomplete="name" placeholder="Votre nom et prénom"></label>
+        <label><span>Email</span><input type="email" name="email" required autocomplete="email" placeholder="vous@exemple.com"></label>
+        <label><span>Téléphone</span><input type="tel" name="telephone" class="pc-phone" autocomplete="tel" inputmode="tel" placeholder="Numéro de téléphone"></label>
+        <label><span>Ville</span><input type="text" name="ville" autocomplete="address-level2" list="pc-villes-list" placeholder="Choisir une ville"></label>
+      </div>
+      <datalist id="pc-villes-list">
+        <option value="Cotonou"><option value="Abomey-Calavi"><option value="Porto-Novo"><option value="Ouidah"><option value="Parakou"><option value="Abomey"><option value="Bohicon"><option value="Djougou"><option value="Natitingou"><option value="Lokossa"><option value="Savalou"><option value="Kandi"><option value="Malanville"><option value="Sakété"><option value="Aplahoué"><option value="Comè"><option value="Grand-Popo">
+      </datalist>
+      <label><span>Mot de passe</span><input type="password" name="mot_de_passe" required minlength="8" autocomplete="new-password" placeholder="8 caractères minimum"></label>
+
+      {% if role == 'photographe' %}
+      <div class="signup-pro-fields signup-pro-fields-page">
+        <div class="form-section-label pro-section-label">Votre activité professionnelle</div>
+        <div class="pc-specialties-field" data-specialties-picker>
+          <span class="pc-field-label">Spécialités</span>
+          <div class="pc-specialties-picker">
+            <button type="button" class="pc-specialties-trigger" aria-haspopup="listbox" aria-expanded="false">
+              <span class="pc-specialties-label">Choisir vos spécialités</span>
+            </button>
+            <div class="pc-specialties-menu" role="listbox" aria-multiselectable="true">
+              {% set selected_specialites = request.form.get('specialites', '').split(',') if request.form.get('specialites') else [] %}
+              {% for specialite in ['Mariage', 'Portrait', 'Événementiel', 'Mode', 'Grossesse', 'Produits', 'Corporate', 'Sport', 'Lifestyle', 'Photo scolaire', 'Immobilier', 'Nature'] %}
+              <label class="pc-specialty-option">
+                <input type="checkbox" value="{{ specialite }}" {% if specialite in selected_specialites %}checked{% endif %}>
+                <span>{{ specialite }}</span>
+                <b aria-hidden="true">✓</b>
+              </label>
+              {% endfor %}
+            </div>
+            <input type="hidden" name="specialites" class="pc-specialties-value" value="{{ request.form.get('specialites', '') }}">
+          </div>
+          <small class="pc-specialties-hint">Sélectionnez une ou plusieurs spécialités.</small>
+        </div>
+        <label><span>Présentation</span><textarea name="presentation" rows="4" placeholder="Parlez de votre parcours, votre style et votre approche…"></textarea></label>
+        <div class="auth-field-grid">
+          <label><span>Années d'expérience</span><div class="modern-number auth-number"><button type="button" data-step="-1">−</button><input type="number" name="annees_experience" min="0" max="60" value="0"><button type="button" data-step="1">+</button></div></label>
+          <label><span>Tarif de départ (FCFA)</span><div class="modern-number auth-number"><button type="button" data-step="-5000">−</button><input type="number" name="tarif_min" min="0" step="5000" placeholder="50000"><button type="button" data-step="5000">+</button></div></label>
+        </div>
+        <label><span>Réseaux sociaux <small>(optionnel)</small></span><input type="text" name="reseaux_sociaux" placeholder="@votre_compte"></label>
+      </div>
+      {% endif %}
+
+      <button type="submit" class="btn btn-primary auth-submit">Créer mon compte <span>→</span></button>
+    </form>
+    <p class="auth-switch">Déjà un compte ? <a href="{{ url_for('connexion') }}">Se connecter</a></p>
+  </div>
+</section>
+{% endblock %}

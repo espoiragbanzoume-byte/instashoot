@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+
+{% block title %}Inspiration — InstaShoot{% endblock %}
+
+{% block content %}
+<section class="inspiration-feed-page">
+  <header class="inspiration-feed-header">
+    <div>
+      <p class="inspiration-kicker">INSPIRATION</p>
+      <h1>Les publications des photographes</h1>
+      <p>Découvrez les derniers posts publiés par les photographes de la communauté InstaShoot.</p>
+    </div>
+  </header>
+
+  {% if publications %}
+    <div class="inspiration-post-feed">
+      {% for pub in publications %}
+        {% set pub = pub %}
+        {% include '_post.html' %}
+      {% endfor %}
+    </div>
+  {% else %}
+    <section class="inspiration-empty">
+      <div class="inspiration-empty-icon">IS</div>
+      <h2>Pas encore de publications</h2>
+      <p>Les publications des photographes apparaîtront ici.</p>
+    </section>
+  {% endif %}
+</section>
+{% endblock %}

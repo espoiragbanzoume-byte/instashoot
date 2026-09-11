@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block title %}Demander un devis — {{ photographe.nom }}{% endblock %}
+{% block content %}
+<section class="quote-page">
+  <div class="quote-shell">
+    <a class="quote-back" href="{{ url_for('profil_photographe', photographe_id=photographe.id) }}">← Retour au profil</a>
+    <header class="quote-hero-card">
+      <div class="quote-person">
+        {% if photographe.avatar_url %}<img src="{{ photographe.avatar_url }}" alt="{{ photographe.nom }}">{% else %}<span>{{ photographe.nom[:1]|upper }}</span>{% endif %}
+        <div><strong>{{ photographe.nom }}</strong><small>Photographe sur InstaShoot{% if photographe.ville %} · {{ photographe.ville }}{% endif %}</small></div>
+      </div>
+      <span class="quote-eyebrow">DEMANDE DE PRESTATION</span>
+      <h1>Parlons de votre projet.</h1>
+      <p>Quelques informations suffisent pour permettre à {{ photographe.nom }} de vous répondre avec une proposition adaptée.</p>
+    </header>
+    {% if message %}<div class="quote-success" role="status">✓ {{ message }}</div>{% endif %}
+    <form class="quote-form quote-modern-form" method="post">
+      <section class="quote-section"><div class="quote-section-number">01</div><div class="quote-section-body"><h2>La prestation</h2><p>Choisissez le type de séance qui correspond à votre projet.</p><div class="quote-choice-grid">{% for option in prestations_disponibles %}<label class="quote-choice"><input type="radio" name="type_prestation" value="{{ option }}" {{ 'checked' if loop.first else '' }}><span>{{ option }}</span><b>✓</b></label>{% endfor %}</div></div></section>
+      <section class="quote-section"><div class="quote-section-number">02</div><div class="quote-section-body"><h2>La date</h2><p>Sélectionnez directement votre date souhaitée.</p><label class="quote-field quote-date-field"><span>Date souhaitée</span><input type="date" name="date_prestation" required min="{{ current_date }}"></label></div></section>
+      <section class="quote-section"><div class="quote-section-number">03</div><div class="quote-section-body"><h2>Votre budget</h2><p>Une estimation aide le photographe à préparer une proposition cohérente.</p><label class="quote-field"><span>Budget estimé <small>(FCFA)</small></span><input type="number" name="budget" min="0" step="5000" placeholder="Ex. 60 000"></label></div></section>
+      <section class="quote-section"><div class="quote-section-number">04</div><div class="quote-section-body"><h2>Votre projet</h2><p>Lieu, nombre de personnes, ambiance, contraintes…</p><label class="quote-field"><span>Votre message</span><textarea name="message" rows="5" maxlength="2000" placeholder="Décrivez votre projet…" required></textarea></label></div></section>
+      <footer class="quote-footer"><div><strong>Prêt à envoyer ?</strong><p>Votre demande sera transmise directement à {{ photographe.nom }}.</p></div><button type="submit" class="btn btn-primary quote-submit">Envoyer ma demande <span>→</span></button></footer>
+    </form>
+  </div>
+</section>
+{% endblock %}
