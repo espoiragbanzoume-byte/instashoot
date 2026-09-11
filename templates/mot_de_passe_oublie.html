@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+
+{% block title %}Mot de passe oublié — InstaShoot{% endblock %}
+
+{% block content %}
+<section class="auth-container password-recovery-container">
+  <div class="recovery-eyebrow">SÉCURITÉ</div>
+  <h1>Mot de passe oublié ?</h1>
+  <p class="recovery-description">Entrez l’adresse e-mail associée à votre compte. Nous vous enverrons un code de vérification à 6 chiffres.</p>
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% for category, msg in messages %}<p class="auth-message {{ category }}">{{ msg }}</p>{% endfor %}
+  {% endwith %}
+  <form class="auth-form recovery-form" method="post">
+    <label>Email</label>
+    <input type="email" name="email" autocomplete="email" required placeholder="vous@exemple.com">
+    <button type="submit" class="btn btn-primary">Envoyer le code</button>
+  </form>
+  <p class="auth-switch"><a href="{{ url_for('connexion') }}">← Retour à la connexion</a></p>
+</section>
+{% endblock %}

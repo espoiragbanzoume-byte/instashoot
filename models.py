@@ -49,6 +49,18 @@ class Utilisateur(db.Model):
         return Abonnement.query.filter_by(abonne_id=utilisateur_id, suivi_id=self.id).first() is not None
 
 
+class DemandeReinitialisationMotDePasse(db.Model):
+    __tablename__ = "demande_reinitialisation_mot_de_passe"
+    id = db.Column(db.Integer, primary_key=True)
+    utilisateur_id = db.Column(db.Integer, db.ForeignKey("utilisateur.id"), nullable=False)
+    code_hash = db.Column(db.String(64), nullable=False)
+    expire_at = db.Column(db.DateTime, nullable=False)
+    tentatives = db.Column(db.Integer, default=0, nullable=False)
+    utilise = db.Column(db.Boolean, default=False, nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    utilisateur = db.relationship("Utilisateur")
+
+
 class Publication(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     utilisateur_id = db.Column(db.Integer, db.ForeignKey("utilisateur.id"), nullable=False)

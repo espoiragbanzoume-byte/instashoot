@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+
+{% block title %}Vérification — InstaShoot{% endblock %}
+
+{% block content %}
+<section class="auth-container password-recovery-container">
+  <div class="recovery-eyebrow">VÉRIFICATION</div>
+  <h1>Entrez votre code</h1>
+  {% if message %}<p class="recovery-description">{{ message }}</p>{% else %}<p class="recovery-description">Saisissez le code à 6 chiffres reçu par e-mail. Il est valable 10 minutes.</p>{% endif %}
+  {% if erreur %}<p class="auth-message error">{{ erreur }}</p>{% endif %}
+  <form class="auth-form recovery-form" method="post" action="{{ url_for('verifier_code_reinitialisation') }}">
+    <input type="hidden" name="email" value="{{ email }}">
+    <label>Code de vérification</label>
+    <input class="recovery-code-input" type="text" name="code" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" autocomplete="one-time-code" required placeholder="000000">
+    <button type="submit" class="btn btn-primary">Vérifier le code</button>
+  </form>
+  <p class="auth-switch"><a href="{{ url_for('mot_de_passe_oublie') }}">Demander un nouveau code</a></p>
+  <a class="recovery-skip" href="{{ url_for('connexion') }}">Passer</a>
+</section>
+{% endblock %}

@@ -3778,3 +3778,25 @@ input[type="date"]{
     right:6px;
   }
 }
+
+
+/* =========================================================
+   RÉCUPÉRATION DU MOT DE PASSE
+   ========================================================= */
+.password-recovery-container{max-width:520px!important;margin:2.5rem auto!important;padding:2.25rem!important;background:rgba(255,255,255,.98);border:1px solid var(--line);border-radius:22px;box-shadow:0 20px 60px rgba(0,0,0,.08)}
+.recovery-eyebrow{font-size:.68rem;letter-spacing:.14em;font-weight:800;color:var(--charcoal);margin-bottom:.55rem}
+.password-recovery-container h1{margin-bottom:.55rem}
+.recovery-description{font-size:.88rem;line-height:1.55;color:var(--charcoal);margin:0 0 1.25rem}
+.recovery-form{gap:.65rem}
+.recovery-form .btn{margin-top:.45rem}
+.recovery-code-input{text-align:center!important;letter-spacing:.38em;font-size:1.25rem!important;font-weight:800}
+.forgot-password-link{text-align:center;margin:.75rem 0 0;font-size:.8rem}
+.forgot-password-link a{color:inherit;font-weight:700;text-decoration:underline;text-underline-offset:3px}
+.modal-forgot{margin-top:.8rem}
+.auth-message.error{background:#f8e0df!important;color:#8d211b!important}
+.auth-message.success{background:#e5f3e8!important;color:#23613a!important}
+@media(max-width:600px){.password-recovery-container{margin:1rem!important;padding:1.3rem!important;border-radius:18px}.recovery-code-input{letter-spacing:.28em}}
+
+.recovery-skip{display:block;text-align:center;margin:1rem auto .15rem;color:var(--charcoal);font-size:.82rem;font-weight:700;text-decoration:underline;text-underline-offset:3px}
+.recovery-skip:hover{opacity:.7}
+.recovery-skip-hint{text-align:center;margin:0;color:#777;font-size:.72rem;line-height:1.4}
