@@ -3648,3 +3648,133 @@ input[type="date"]{
   .inspiration-post .pc-post-caption,.inspiration-post .pc-comments{padding-left:.9rem!important;padding-right:.9rem!important}
   .inspiration-post .pc-comment-form{padding-left:.9rem!important;padding-right:.9rem!important}
 }
+
+
+/* =========================================================
+   PASSWORD FIELD — EYE TOGGLE / ALIGNEMENT
+   ========================================================= */
+.password-field{
+  position:relative;
+  width:100%;
+  min-width:0;
+  display:block;
+}
+
+.password-field > input{
+  width:100% !important;
+  min-width:0 !important;
+  padding-right:52px !important;
+  box-sizing:border-box;
+}
+
+.password-toggle{
+  position:absolute;
+  right:8px;
+  top:50%;
+  transform:translateY(-50%);
+  width:36px;
+  height:36px;
+  padding:0;
+  margin:0;
+  border:0;
+  border-radius:50%;
+  background:transparent;
+  color:#666;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  cursor:pointer;
+  z-index:5;
+  line-height:0;
+}
+
+.password-toggle:hover{
+  background:#f1f1ef;
+  color:#111;
+}
+
+.password-toggle:focus-visible{
+  outline:2px solid #111;
+  outline-offset:2px;
+}
+
+.password-toggle svg{
+  width:19px;
+  height:19px;
+  display:block;
+}
+
+.password-toggle .eye-off{display:none;}
+.password-toggle.is-visible .eye{display:none;}
+.password-toggle.is-visible .eye-off{display:block;}
+
+/* Auth pages / login modals */
+.auth-form .password-field{
+  margin:0;
+}
+
+.auth-form .password-field input{
+  margin:0;
+}
+
+/* Settings security modal: keep every field perfectly aligned */
+#modal-mdp .settings-field{
+  display:flex;
+  flex-direction:column;
+  gap:.45rem;
+  padding:1rem 1.15rem;
+  box-sizing:border-box;
+}
+
+#modal-mdp .settings-field > .password-field{
+  width:100%;
+}
+
+#modal-mdp .settings-field > .password-field > input{
+  min-height:48px;
+}
+
+/* Wider security modal, matching the clean centered composition */
+#modal-mdp .settings-modal-box{
+  width:min(620px, calc(100vw - 32px));
+  max-width:620px;
+  box-sizing:border-box;
+  padding:32px !important;
+  border-radius:22px;
+}
+
+#modal-mdp .modal-description{
+  margin-bottom:1.2rem;
+}
+
+#modal-mdp .modal-actions{
+  margin-top:1.25rem;
+}
+
+/* Registration page/modal */
+.auth-modern-form .password-field{
+  width:100%;
+}
+
+#modal-inscription-overlay .password-field input,
+.auth-modern-page .password-field input{
+  min-height:48px;
+  box-sizing:border-box;
+}
+
+@media (max-width:600px){
+  #modal-mdp .settings-modal-box{
+    width:calc(100vw - 24px);
+    max-width:none;
+    padding:22px !important;
+    border-radius:18px;
+  }
+
+  #modal-mdp .settings-field{
+    padding:1rem 0;
+  }
+
+  .password-toggle{
+    right:6px;
+  }
+}

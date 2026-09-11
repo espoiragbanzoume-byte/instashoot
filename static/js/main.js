@@ -769,3 +769,30 @@ function initialiserSpecialitesInscription(){
 }
 
 document.addEventListener('DOMContentLoaded',()=>{initialiserMenusDeroulantsModernes();initialiserSpecialitesInscription();});
+
+
+/* =========================================================
+   AFFICHER / MASQUER LE MOT DE PASSE
+   Délégation d'événement : fonctionne aussi dans les modales
+   ========================================================= */
+function togglePasswordVisibility(button) {
+  const field = button.closest('.password-field');
+  if (!field) return;
+
+  const input = field.querySelector('input[type="password"], input[type="text"]');
+  if (!input) return;
+
+  const isVisible = input.type === 'text';
+  input.type = isVisible ? 'password' : 'text';
+
+  button.classList.toggle('is-visible', !isVisible);
+  button.setAttribute('aria-label', isVisible ? 'Afficher le mot de passe' : 'Masquer le mot de passe');
+  button.setAttribute('title', isVisible ? 'Afficher le mot de passe' : 'Masquer le mot de passe');
+}
+
+document.addEventListener('click', function(event) {
+  const button = event.target.closest('.password-toggle');
+  if (!button) return;
+  event.preventDefault();
+  togglePasswordVisibility(button);
+});

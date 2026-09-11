@@ -35,7 +35,18 @@
       <datalist id="pc-villes-list">
         <option value="Cotonou"><option value="Abomey-Calavi"><option value="Porto-Novo"><option value="Ouidah"><option value="Parakou"><option value="Abomey"><option value="Bohicon"><option value="Djougou"><option value="Natitingou"><option value="Lokossa"><option value="Savalou"><option value="Kandi"><option value="Malanville"><option value="Sakété"><option value="Aplahoué"><option value="Comè"><option value="Grand-Popo">
       </datalist>
-      <label><span>Mot de passe</span><input type="password" name="mot_de_passe" required minlength="8" autocomplete="new-password" placeholder="8 caractères minimum"></label>
+      <label><span>Mot de passe</span><div class="password-field"><input type="password" name="mot_de_passe" required minlength="8" autocomplete="new-password" placeholder="8 caractères minimum"><button type="button" class="password-toggle" aria-label="Afficher le mot de passe" title="Afficher le mot de passe">
+  <svg class="eye" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+    <path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6S2 12 2 12Z"/>
+    <circle cx="12" cy="12" r="2.5"/>
+  </svg>
+  <svg class="eye-off" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+    <path d="M3 3l18 18"/>
+    <path d="M10.6 6.2A10.8 10.8 0 0 1 12 6c6.5 0 10 6 10 6a18.4 18.4 0 0 1-3.1 3.8"/>
+    <path d="M6.2 6.2C3.5 8.1 2 12 2 12s3.5 6 10 6c1.7 0 3.2-.4 4.5-1"/>
+    <path d="M9.9 9.9a3 3 0 0 0 4.2 4.2"/>
+  </svg>
+</button></div></label>
 
       {% if role == 'photographe' %}
       <div class="signup-pro-fields signup-pro-fields-page">
