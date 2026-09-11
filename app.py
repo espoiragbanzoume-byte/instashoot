@@ -1,15 +1,34 @@
 import os
 import uuid
+import secrets
+import hashlib
+import re
+import smtplib
+from email.message import EmailMessage
+from email.utils import formataddr
 from werkzeug.utils import secure_filename
 from flask import Flask, render_template, request, redirect, url_for, session, flash, jsonify
-from datetime import date
-from models import db, Utilisateur, ProfilPhotographe, Album, PortfolioPhoto, Reservation, Avis, Publication, Abonnement, Message, PublicationLike, Commentaire, Enregistrement, Repost, Notification
+from datetime import date, datetime, timedelta
+from models import db, Utilisateur, ProfilPhotographe, Album, PortfolioPhoto, Reservation, Avis, Publication, Abonnement, Message, PublicationLike, Commentaire, Enregistrement, Repost, Notification, DemandeReinitialisationMotDePasse
 
 app = Flask(__name__)
-app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get("DATABASE_URL", "sqlite:///photoconnect.db")
-app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY", "cle-de-developpement-a-changer-plus-tard")
+app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///photoconnect.db"
+app.config["SECRET_KEY"] = "cle-de-developpement-a-changer-plus-tard"
 app.config["UPLOAD_FOLDER"] = os.path.join(app.static_folder, "uploads")
 app.config["MAX_CONTENT_LENGTH"] = 40 * 1024 * 1024  # 40 Mo par requête (plusieurs photos à la fois)
+
+# Configuration Gmail pour la récupération du mot de passe.
+# Les valeurs doivent être fournies par variables d'environnement, jamais dans GitHub.
+app.config["MAIL_SERVER"] = os.getenv("MAIL_SERVER", "smtp.gmail.com").strip()
+app.config["MAIL_PORT"] = int(os.getenv("MAIL_PORT", "465"))
+app.config["MAIL_USERNAME"] = os.getenv("MAIL_USERNAME", "support.instashoot@gmail.com").strip()
+# Google affiche parfois le mot de passe d'application avec des espaces.
+# Ils sont retirés automatiquement pour éviter une erreur SMTP.
+app.config["MAIL_PASSWORD"] = os.getenv("MAIL_PASSWORD", "").replace(" ", "").strip()
+app.config["RESET_CODE_EXPIRATION_MINUTES"] = 10
+app.config["RESET_MAX_ATTEMPTS"] = 5
+app.config["RESET_RESEND_DELAY_SECONDS"] = 60
+
 
 os.makedirs(app.config["UPLOAD_FOLDER"], exist_ok=True)
 
@@ -221,7 +240,7 @@ def demander_devis(photographe_id):
         session.pop("utilisateur_id", None)
         return redirect(url_for("connexion", next=url_for("demander_devis", photographe_id=photographe_id)))
     if client.role != "client":
-        return render_template("devis.html", photographe=photographe, message="Seuls les comptes client peuvent demander un devis.", current_date=date.today().isoformat())
+        return render_template("devis.html", photographe=photographe, message="Seuls les comptes client peuvent demander un devis.", current_date=date.today().isoformat(), max_date=date(date.today().year + 2, 12, 31).isoformat())
 
     if request.method == "POST":
         reservation = Reservation(
@@ -237,9 +256,9 @@ def demander_devis(photographe_id):
         creer_notification(photographe.id, "demande", "Nouvelle demande de prestation",
             f"{client.nom} souhaite travailler avec vous.", url_for("mes_demandes"))
         db.session.commit()
-        return render_template("devis.html", photographe=photographe, message="Ta demande a bien été envoyée au photographe.", current_date=date.today().isoformat())
+        return render_template("devis.html", photographe=photographe, message="Ta demande a bien été envoyée au photographe.", current_date=date.today().isoformat(), max_date=date(date.today().year + 2, 12, 31).isoformat())
 
-    return render_template("devis.html", photographe=photographe, current_date=date.today().isoformat())
+    return render_template("devis.html", photographe=photographe, current_date=date.today().isoformat(), max_date=date(date.today().year + 2, 12, 31).isoformat())
 
 
 @app.route("/photographe/<int:photographe_id>/avis", methods=["POST"])
@@ -947,6 +966,240 @@ def inscription():
     return render_template("inscription.html", role=role)
 
 
+def envoyer_email_gmail(email_destinataire, sujet, contenu):
+    """Envoie un e-mail via le compte Gmail officiel d'InstaShoot."""
+    expediteur = app.config.get("MAIL_USERNAME", "").strip()
+    mot_de_passe = app.config.get("MAIL_PASSWORD", "").replace(" ", "").strip()
+    email_destinataire = (email_destinataire or "").strip().lower()
+
+    if not expediteur or not mot_de_passe or not email_destinataire:
+        app.logger.error("Gmail non configuré ou adresse destinataire manquante.")
+        return False
+
+    message = EmailMessage()
+    message["Subject"] = sujet
+    # Affiche clairement le nom du service tout en conservant l'adresse support.
+    message["From"] = formataddr(("InstaShoot", expediteur))
+    message["To"] = email_destinataire
+    message["Reply-To"] = expediteur
+    message.set_content(contenu)
+
+    try:
+        with smtplib.SMTP_SSL(
+            app.config["MAIL_SERVER"],
+            app.config["MAIL_PORT"],
+            timeout=15
+        ) as serveur:
+            serveur.login(expediteur, mot_de_passe)
+            serveur.send_message(message)
+        return True
+    except Exception:
+        app.logger.exception("Échec de l'envoi d'un e-mail Gmail.")
+        return False
+
+
+def envoyer_email_bienvenue(utilisateur):
+    """Envoie un message de bienvenue après une connexion réussie.
+    L'échec de l'envoi ne bloque jamais la connexion.
+    """
+    prenom = (getattr(utilisateur, "nom", "") or "").strip()
+    nom_affiche = f" {prenom}" if prenom else ""
+
+    contenu = f"""Bonjour{nom_affiche},
+
+Bienvenue sur InstaShoot !
+
+Votre connexion à votre compte InstaShoot vient d'être effectuée avec succès.
+
+Vous pouvez maintenant découvrir des photographes, présenter votre travail, échanger avec la communauté et profiter pleinement de votre espace.
+
+Si vous n'êtes pas à l'origine de cette connexion, nous vous recommandons de vérifier votre compte et de modifier votre mot de passe.
+
+À très bientôt sur InstaShoot !
+
+L'équipe InstaShoot
+"""
+    return envoyer_email_gmail(
+        utilisateur.email,
+        "Bienvenue sur InstaShoot 👋",
+        contenu
+    )
+
+
+def envoyer_code_reinitialisation(email_destinataire, code):
+    """Envoie le code de récupération par Gmail."""
+    contenu = f"""Bonjour,
+
+Vous avez demandé à réinitialiser votre mot de passe InstaShoot.
+
+Votre code de vérification est : {code}
+
+Ce code est valable pendant 10 minutes et ne peut être utilisé qu'une seule fois.
+
+Si vous n'êtes pas à l'origine de cette demande, vous pouvez ignorer cet e-mail.
+
+L'équipe InstaShoot
+"""
+    return envoyer_email_gmail(
+        email_destinataire,
+        "InstaShoot — Code de réinitialisation",
+        contenu
+    )
+
+
+def creer_code_reinitialisation(utilisateur):
+    """Crée un code à 6 chiffres, stocké uniquement sous forme hachée."""
+    # Invalide les anciennes demandes encore actives.
+    DemandeReinitialisationMotDePasse.query.filter_by(
+        utilisateur_id=utilisateur.id, utilise=False
+    ).delete(synchronize_session=False)
+
+    code = f"{secrets.randbelow(1000000):06d}"
+    demande = DemandeReinitialisationMotDePasse(
+        utilisateur_id=utilisateur.id,
+        code_hash=hashlib.sha256(code.encode("utf-8")).hexdigest(),
+        expire_at=datetime.utcnow() + timedelta(minutes=app.config["RESET_CODE_EXPIRATION_MINUTES"]),
+        tentatives=0,
+        utilise=False,
+    )
+    db.session.add(demande)
+    db.session.commit()
+    return code
+
+
+@app.route("/mot-de-passe-oublie", methods=["GET", "POST"])
+def mot_de_passe_oublie():
+    if request.method == "POST":
+        email = request.form.get("email", "").strip().lower()
+        utilisateur = Utilisateur.query.filter_by(email=email).first() if email else None
+
+        # Message identique dans tous les cas afin de ne pas révéler les comptes existants.
+        message = "Si cette adresse est associée à un compte, un code de vérification vient d'être envoyé. Vérifiez votre boîte de réception et vos spams."
+        if utilisateur:
+            # Évite un envoi répété immédiat pour la même adresse.
+            derniere = DemandeReinitialisationMotDePasse.query.filter_by(
+                utilisateur_id=utilisateur.id, utilise=False
+            ).order_by(DemandeReinitialisationMotDePasse.created_at.desc()).first()
+            if derniere and (datetime.utcnow() - derniere.created_at).total_seconds() < app.config["RESET_RESEND_DELAY_SECONDS"]:
+                flash("Un code vient déjà d'être envoyé. Attendez une minute avant d'en demander un nouveau.", "error")
+                return render_template("mot_de_passe_oublie.html")
+
+            code = creer_code_reinitialisation(utilisateur)
+            if envoyer_code_reinitialisation(utilisateur.email, code):
+                session.pop("reset_user_id", None)
+            else:
+                # Ne laisse pas un code actif si l'envoi a échoué.
+                DemandeReinitialisationMotDePasse.query.filter_by(
+                    utilisateur_id=utilisateur.id, utilise=False
+                ).delete(synchronize_session=False)
+                db.session.commit()
+                flash("L'envoi de l'e-mail a échoué. Vérifiez la configuration Gmail du site puis réessayez.", "error")
+                return render_template("mot_de_passe_oublie.html")
+
+        return render_template("mot_de_passe_code.html", email=email, message=message)
+
+    return render_template("mot_de_passe_oublie.html")
+
+
+@app.route("/mot-de-passe-code", methods=["GET", "POST"])
+def verifier_code_reinitialisation():
+    email = request.values.get("email", "").strip().lower()
+    if request.method == "POST":
+        code = request.form.get("code", "").strip()
+        utilisateur = Utilisateur.query.filter_by(email=email).first() if email else None
+
+        if not re.fullmatch(r"\d{6}", code):
+            return render_template(
+                "mot_de_passe_code.html",
+                email=email,
+                erreur="Entrez un code à 6 chiffres."
+            )
+        demande = None
+        if utilisateur:
+            demande = DemandeReinitialisationMotDePasse.query.filter_by(
+                utilisateur_id=utilisateur.id, utilise=False
+            ).order_by(DemandeReinitialisationMotDePasse.created_at.desc()).first()
+
+        if not demande or datetime.utcnow() > demande.expire_at:
+            if demande:
+                demande.utilise = True
+                db.session.commit()
+            return render_template("mot_de_passe_code.html", email=email, erreur="Ce code est expiré ou invalide. Demandez un nouveau code.")
+
+        if demande.tentatives >= app.config["RESET_MAX_ATTEMPTS"]:
+            return render_template("mot_de_passe_code.html", email=email, erreur="Trop de tentatives. Demandez un nouveau code.")
+
+        demande.tentatives += 1
+        valide = secrets.compare_digest(
+            demande.code_hash,
+            hashlib.sha256(code.encode("utf-8")).hexdigest()
+        )
+        if not valide:
+            db.session.commit()
+            reste = max(0, app.config["RESET_MAX_ATTEMPTS"] - demande.tentatives)
+            return render_template("mot_de_passe_code.html", email=email, erreur=f"Code incorrect. Il vous reste {reste} tentative(s).")
+
+        # Le code est marqué utilisé immédiatement : la session autorise ensuite une seule réinitialisation.
+        demande.utilise = True
+        db.session.commit()
+        session.pop("reset_user_id", None)
+        session.pop("reset_authorized_at", None)
+        session["reset_user_id"] = utilisateur.id
+        session["reset_authorized_at"] = datetime.utcnow().isoformat()
+        return redirect(url_for("reinitialiser_mot_de_passe"))
+
+    return render_template("mot_de_passe_code.html", email=email)
+
+
+@app.route("/annuler-reinitialisation-mot-de-passe")
+def annuler_reinitialisation_mot_de_passe():
+    session.pop("reset_user_id", None)
+    session.pop("reset_authorized_at", None)
+    return redirect(url_for("connexion"))
+
+
+@app.route("/reinitialiser-mot-de-passe", methods=["GET", "POST"])
+def reinitialiser_mot_de_passe():
+    user_id = session.get("reset_user_id")
+    authorized_at = session.get("reset_authorized_at")
+    if not user_id or not authorized_at:
+        return redirect(url_for("mot_de_passe_oublie"))
+
+    try:
+        if datetime.utcnow() - datetime.fromisoformat(authorized_at) > timedelta(minutes=10):
+            session.pop("reset_user_id", None)
+            session.pop("reset_authorized_at", None)
+            flash("La session de réinitialisation a expiré. Demandez un nouveau code.", "error")
+            return redirect(url_for("mot_de_passe_oublie"))
+    except ValueError:
+        session.pop("reset_user_id", None)
+        session.pop("reset_authorized_at", None)
+        return redirect(url_for("mot_de_passe_oublie"))
+
+    utilisateur = Utilisateur.query.get(user_id)
+    if not utilisateur:
+        session.pop("reset_user_id", None)
+        session.pop("reset_authorized_at", None)
+        return redirect(url_for("mot_de_passe_oublie"))
+
+    if request.method == "POST":
+        nouveau = request.form.get("nouveau_mot_de_passe", "")
+        confirmation = request.form.get("confirmation_mot_de_passe", "")
+        if len(nouveau) < 8:
+            return render_template("reinitialiser_mot_de_passe.html", erreur="Le nouveau mot de passe doit contenir au moins 8 caractères.")
+        if nouveau != confirmation:
+            return render_template("reinitialiser_mot_de_passe.html", erreur="Les deux mots de passe ne correspondent pas.")
+
+        utilisateur.set_mot_de_passe(nouveau)
+        db.session.commit()
+        session.pop("reset_user_id", None)
+        session.pop("reset_authorized_at", None)
+        flash("Votre mot de passe a été réinitialisé avec succès. Vous pouvez maintenant vous connecter.", "success")
+        return redirect(url_for("connexion"))
+
+    return render_template("reinitialiser_mot_de_passe.html")
+
+
 def redirection_sure(chemin):
     """N'autorise que les chemins internes (évite les redirections vers un autre site)."""
     return chemin and chemin.startswith("/") and not chemin.startswith("//")
@@ -962,6 +1215,7 @@ def connexion_ajax():
         return {"ok": False, "message": "Email ou mot de passe incorrect."}, 401
 
     session["utilisateur_id"] = u.id
+    envoyer_email_bienvenue(u)
     return {"ok": True, "nom": u.nom}
 
 
@@ -977,6 +1231,7 @@ def connexion():
             return render_template("connexion.html", message="Email ou mot de passe incorrect.", next=next_url)
 
         session["utilisateur_id"] = u.id
+        envoyer_email_bienvenue(u)
         return redirect(next_url if redirection_sure(next_url) else url_for("accueil"))
 
     return render_template("connexion.html", next=next_url)
@@ -1033,12 +1288,10 @@ def migrer_sqlite():
             cols={c["name"] for c in insp.get_columns("publication")}
             if "album_id" not in cols: conn.execute(text("ALTER TABLE publication ADD COLUMN album_id INTEGER"))
 
-with app.app_context():
-    db.create_all()
-    migrer_sqlite()
-    db.create_all()
-    seeder_donnees_demo()
-
 if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 5000))
-    app.run(host="0.0.0.0", port=port, debug=True)
+    with app.app_context():
+        db.create_all()
+        migrer_sqlite()
+        db.create_all()
+        seeder_donnees_demo()
+    app.run(debug=True)
