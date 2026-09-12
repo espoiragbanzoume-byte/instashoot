@@ -15,6 +15,7 @@ from models import db, Utilisateur, ProfilPhotographe, Album, PortfolioPhoto, Re
 app = Flask(__name__)
 app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get("DATABASE_URL", "sqlite:///photoconnect.db")
 app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY", "cle-de-developpement-a-changer-plus-tard")
+app.config["ADMIN_SETUP_KEY"] = os.environ.get("ADMIN_SETUP_KEY", "")
 app.config["UPLOAD_FOLDER"] = os.path.join(app.static_folder, "uploads")
 app.config["MAX_CONTENT_LENGTH"] = 40 * 1024 * 1024  # 40 Mo par requête (plusieurs photos à la fois)
 
@@ -277,9 +278,23 @@ def laisser_avis(photographe_id):
         return redirect(url_for("connexion", next=url_for("profil_photographe", photographe_id=photographe_id)))
 
     if client.role == "client":
+        reservation_id = request.form.get("reservation_id", type=int)
+        reservation = Reservation.query.get(reservation_id) if reservation_id else None
+
+        eligible = (
+            reservation is not None
+            and reservation.client_id == client.id
+            and reservation.photographe_id == photographe.id
+            and reservation.statut == "terminee"
+            and not Avis.query.filter_by(reservation_id=reservation.id).first()
+        )
+        if not eligible:
+            return redirect(url_for("profil_photographe", photographe_id=photographe_id))
+
         avis = Avis(
             client_id=client.id,
             photographe_id=photographe.id,
+            reservation_id=reservation.id,
             note=request.form.get("note", 5, type=int),
             commentaire=request.form.get("commentaire", "").strip(),
         )
@@ -303,7 +318,18 @@ def profil_photographe(photographe_id):
         return "Photographe introuvable", 404
     avis_liste = Avis.query.filter_by(photographe_id=photographe_id).order_by(Avis.created_at.desc()).all()
     albums = Album.query.filter_by(photographe_id=photographe.id, publication_visible=True).order_by(Album.created_at.desc()).all()
-    return render_template("profil.html", photographe=photographe, albums=albums, avis_liste=avis_liste, reposts=Repost.query.filter_by(utilisateur_id=photographe.id).order_by(Repost.created_at.desc()).all())
+
+    reservations_a_noter = []
+    if "utilisateur_id" in session:
+        moi = Utilisateur.query.get(session["utilisateur_id"])
+        if moi and moi.role == "client":
+            deja_notees = {a.reservation_id for a in Avis.query.filter_by(client_id=moi.id, photographe_id=photographe_id).all()}
+            reservations_a_noter = [
+                r for r in Reservation.query.filter_by(client_id=moi.id, photographe_id=photographe_id, statut="terminee").all()
+                if r.id not in deja_notees
+            ]
+
+    return render_template("profil.html", photographe=photographe, albums=albums, avis_liste=avis_liste, reservations_a_noter=reservations_a_noter, reposts=Repost.query.filter_by(utilisateur_id=photographe.id).order_by(Repost.created_at.desc()).all())
 
 
 @app.route("/mon-profil/avatar", methods=["POST"])
@@ -466,6 +492,137 @@ def envoyer_devis(reservation_id):
     if montant and montant>0:
         d.devis=montant; d.statut="discussion"; db.session.commit()
     return redirect(request.referrer or url_for("mes_demandes"))
+
+
+@app.route("/demande/<int:reservation_id>/payer-acompte", methods=["POST"])
+def payer_acompte(reservation_id):
+    if "utilisateur_id" not in session:
+        return redirect(url_for("connexion"))
+    u = Utilisateur.query.get(session["utilisateur_id"])
+    d = Reservation.query.get_or_404(reservation_id)
+    if not u or u.role != "client" or d.client_id != u.id:
+        return "Non autorisé", 403
+    if d.statut != "acceptee" or not d.devis or d.acompte_paye:
+        return redirect(request.referrer or url_for("mes_demandes"))
+
+    # Simulation de paiement Mobile Money — aucune vraie transaction n'est effectuée.
+    d.acompte_paye = True
+    d.montant_acompte = round(d.devis * 0.4)
+    db.session.commit()
+    creer_notification(
+        d.photographe_id, "reservation", "Acompte reçu (simulation)",
+        f"{u.nom} a réglé un acompte simulé de {d.montant_acompte} FCFA pour sa prestation.",
+        url_for("mes_demandes"),
+    )
+    return redirect(request.referrer or url_for("mes_demandes"))
+
+
+def verifier_eligibilite_certification(photographe):
+    """Vérifie si un photographe remplit les critères objectifs de certification.
+    Retourne (eligible: bool, manquants: liste de messages clairs sur ce qu'il faut compléter)."""
+    profil = photographe.profil_photographe
+    manquants = []
+
+    if not photographe.avatar_url:
+        manquants.append("Ajouter une photo de profil")
+    if not photographe.telephone:
+        manquants.append("Renseigner un numéro de téléphone")
+    if not photographe.ville:
+        manquants.append("Renseigner sa ville")
+    if not profil or not profil.presentation or len(profil.presentation.strip()) < 30:
+        manquants.append("Rédiger une présentation d'au moins 30 caractères")
+    if not profil or not profil.liste_specialites():
+        manquants.append("Renseigner au moins une spécialité")
+    if not profil or not profil.tarif_min or profil.tarif_min <= 0:
+        manquants.append("Renseigner un tarif de départ")
+
+    nb_photos_publiees = sum(len(a.photos) for a in Album.query.filter_by(photographe_id=photographe.id, publication_visible=True).all())
+    if nb_photos_publiees < 3:
+        manquants.append("Publier au moins 3 photos dans son portfolio (albums visibles publiquement)")
+
+    avis_du_photographe = Avis.query.filter_by(photographe_id=photographe.id).all()
+    if avis_du_photographe:
+        moyenne = sum(a.note for a in avis_du_photographe) / len(avis_du_photographe)
+        if moyenne < 3.5:
+            manquants.append("Améliorer sa note moyenne (actuellement en dessous de 3,5/5)")
+    # Remarque : l'absence totale d'avis n'est jamais bloquante, pour ne pas empêcher
+    # un nouveau photographe sérieux d'être certifié faute d'historique.
+
+    return (len(manquants) == 0, manquants)
+
+
+def admin_requis():
+    if "utilisateur_id" not in session:
+        return None
+    u = Utilisateur.query.get(session["utilisateur_id"])
+    return u if (u and u.est_admin) else None
+
+
+@app.route("/admin/devenir-admin/<int:utilisateur_id>")
+def devenir_admin(utilisateur_id):
+    # Route de secours pour promouvoir un premier compte admin, protégée par une clé secrète
+    # définie dans la variable d'environnement ADMIN_SETUP_KEY (à ne partager avec personne).
+    cle = request.args.get("cle", "")
+    if not app.config["ADMIN_SETUP_KEY"] or cle != app.config["ADMIN_SETUP_KEY"]:
+        return "Clé invalide ou non configurée.", 403
+    u = Utilisateur.query.get_or_404(utilisateur_id)
+    u.est_admin = True
+    db.session.commit()
+    return f"Le compte {u.nom} ({u.email}) est maintenant administrateur. Tu peux retirer ADMIN_SETUP_KEY des variables d'environnement si tu veux."
+
+
+@app.route("/mon-profil/demander-certification", methods=["POST"])
+def demander_certification():
+    if "utilisateur_id" not in session:
+        return redirect(url_for("connexion"))
+    photographe = Utilisateur.query.get(session["utilisateur_id"])
+    if not photographe or photographe.role != "photographe":
+        return redirect(url_for("mon_profil"))
+
+    if photographe.profil_photographe.certifie:
+        flash("Ton compte est déjà certifié.", "info")
+        return redirect(url_for("mon_profil"))
+
+    eligible, manquants = verifier_eligibilite_certification(photographe)
+    if eligible:
+        photographe.profil_photographe.certifie = True
+        db.session.commit()
+        creer_notification(photographe.id, "certification", "Félicitations, vous êtes certifié !",
+            "Votre profil remplit tous les critères de qualité InstaShoot. Le badge ✔ Certifié est maintenant visible sur votre profil public.",
+            url_for("mon_profil"))
+        flash("Bravo, ton profil vient d'être certifié automatiquement !", "success")
+    else:
+        flash("Pas encore éligible à la certification. Complète ceci puis réessaie : " + " · ".join(manquants), "error")
+
+    return redirect(url_for("mon_profil"))
+
+
+@app.route("/admin")
+def admin_dashboard():
+    admin = admin_requis()
+    if not admin:
+        return redirect(url_for("connexion"))
+    stats = {
+        "clients": Utilisateur.query.filter_by(role="client").count(),
+        "photographes": Utilisateur.query.filter_by(role="photographe").count(),
+        "reservations_en_cours": Reservation.query.filter(Reservation.statut.in_(["en_attente", "discussion", "acceptee"])).count(),
+        "reservations_terminees": Reservation.query.filter_by(statut="terminee").count(),
+    }
+    photographes = Utilisateur.query.filter_by(role="photographe").order_by(Utilisateur.nom.asc()).all()
+    eligibilites = {p.id: verifier_eligibilite_certification(p) for p in photographes}
+    return render_template("admin.html", stats=stats, photographes=photographes, eligibilites=eligibilites)
+
+
+@app.route("/admin/photographe/<int:photographe_id>/certifier", methods=["POST"])
+def certifier_photographe(photographe_id):
+    admin = admin_requis()
+    if not admin:
+        return redirect(url_for("connexion"))
+    photographe = Utilisateur.query.filter_by(id=photographe_id, role="photographe").first_or_404()
+    if photographe.profil_photographe:
+        photographe.profil_photographe.certifie = not photographe.profil_photographe.certifie
+        db.session.commit()
+    return redirect(url_for("admin_dashboard"))
 
 
 @app.route("/mon-profil")
@@ -788,7 +945,8 @@ def parametres():
         flash(message, "success")
         return redirect(url_for("parametres", section=section))
 
-    return render_template("parametres.html", utilisateur=u, section=section)
+    section_choisie = "section" in request.args
+    return render_template("parametres.html", utilisateur=u, section=section, section_choisie=section_choisie)
 
 @app.route("/album/<int:album_id>/collaboration", methods=["POST"])
 def gerer_collaboration(album_id):

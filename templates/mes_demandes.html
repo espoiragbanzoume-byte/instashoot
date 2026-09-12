@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% block title %}Mes demandes — InstaShoot{% endblock %}
+{% set masquer_pied_de_page = true %}
 {% block content %}
 <section class="requests-page">
   <header class="requests-header">
@@ -31,7 +32,7 @@
             <span class="request-step {% if d.statut==step[0] %}current{% elif (step[0]=='en_attente' and d.statut in ['discussion','acceptee','terminee']) or (step[0]=='discussion' and d.statut in ['acceptee','terminee']) or (step[0]=='acceptee' and d.statut=='terminee') %}done{% endif %}"><i></i>{{ step[1] }}</span>
           {% endfor %}
         </div>
-        <details class="demande-details"><summary>Voir les détails</summary><div class="request-detail-grid"><p><small>Message</small>{{ d.message or 'Aucun message' }}</p><p><small>Budget annoncé</small>{{ d.budget ~ ' FCFA' if d.budget else 'Non précisé' }}</p>{% if d.devis %}<p><small>Devis proposé</small><strong>{{ d.devis }} FCFA</strong></p>{% endif %}</div></details>
+        <details class="demande-details"><summary>Voir les détails</summary><div class="request-detail-grid"><p><small>Message</small>{{ d.message or 'Aucun message' }}</p><p><small>Budget annoncé</small>{{ d.budget ~ ' FCFA' if d.budget else 'Non précisé' }}</p>{% if d.devis %}<p><small>Devis proposé</small><strong>{{ d.devis }} FCFA</strong></p>{% endif %}{% if d.acompte_paye %}<p><small>Acompte</small><strong>✓ Payé — {{ d.montant_acompte }} FCFA (simulation)</strong></p>{% endif %}</div></details>
       </div>
 
       {% if role=='photographe' %}
@@ -52,6 +53,13 @@
       <div class="demande-actions client-request-actions">
         <a href="{{ url_for('messagerie',avec=d.photographe.id) }}" class="btn btn-outline btn-sm">Discuter avec le photographe</a>
         {% if d.devis and d.statut=='discussion' %}<form method="post" action="{{ url_for('modifier_statut_demande',reservation_id=d.id) }}"><input type="hidden" name="statut" value="acceptee"><button class="btn btn-primary btn-sm" type="submit">Accepter le devis</button></form>{% endif %}
+        {% if d.statut=='acceptee' and d.devis and not d.acompte_paye %}
+          <form method="post" action="{{ url_for('payer_acompte',reservation_id=d.id) }}" onsubmit="return confirm('Ceci est une simulation de paiement Mobile Money (aucun vrai montant ne sera débité). Confirmer ?');">
+            <button class="btn btn-success-solid btn-sm" type="submit">Payer l'acompte ({{ (d.devis * 0.4)|round|int }} FCFA)</button>
+          </form>
+        {% elif d.acompte_paye %}
+          <span class="pc-status pc-status-acceptee">✓ Acompte payé ({{ d.montant_acompte }} FCFA)</span>
+        {% endif %}
       </div>
       {% endif %}
     </article>

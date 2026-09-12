@@ -3978,3 +3978,145 @@ input[type="date"]{
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+
+.ig-empty-note{color:var(--charcoal);font-size:.85rem;text-align:center;padding:1rem;}
+
+/* ============================
+   Admin
+   ============================ */
+.admin-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 1rem;
+  margin: 1.5rem 0;
+}
+
+.admin-stat-card {
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 1.2rem;
+  text-align: center;
+}
+
+.admin-stat-card strong {
+  display: block;
+  font-family: var(--font-display);
+  font-size: 1.8rem;
+  margin-bottom: 0.2rem;
+}
+
+.admin-stat-card span {
+  font-size: 0.85rem;
+  color: var(--charcoal);
+}
+
+/* ============================
+   Messages flash
+   ============================ */
+.flash-messages-wrap {
+  max-width: 900px;
+  margin: 1rem auto 0;
+  padding: 0 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.flash-message {
+  padding: 0.8rem 1.1rem;
+  border-radius: 6px;
+  font-size: 0.9rem;
+}
+
+.flash-success { background: #dff3e3; color: #1e5c31; }
+.flash-error { background: #f6d6d6; color: #7a1f1f; }
+.flash-info { background: var(--accent-light); color: var(--ink); }
+
+/* ============================
+   Ajustements mobile façon "app" :
+   footer masqué, grille profil edge-to-edge, feuille de paramètres
+   ============================ */
+@media (max-width: 768px) {
+  /* Pas de pied de page du tout sur mobile, quelle que soit la page */
+  .footer { display: none !important; }
+
+  /* Grille de profil pleine largeur, comme Instagram (touche les bords) */
+  .ig-page { padding: 0; }
+  .ig-profile-head,
+  .ig-settings-head,
+  .inspiration-feed-header,
+  .ig-settings-page > .ig-settings-head { padding-left: 1rem; padding-right: 1rem; }
+  .ig-tabs { padding: 0 1rem; }
+  .ig-panel { padding: 0; }
+  .ig-grid {
+    gap: 2px;
+    grid-template-columns: repeat(3, 1fr);
+  }
+  .ig-avatar { width: 76px; height: 76px; }
+  .ig-name-row h1 { font-size: 1.05rem; }
+  .ig-stats { font-size: .82rem; }
+  .ig-bio, .ig-meta { font-size: .82rem; padding: 0 1rem; }
+  .ig-profile-actions { padding: 0 1rem; }
+  .profil-tags { padding: 0 1rem; }
+
+  /* Feuille de paramètres façon Instagram : la liste d'abord, */
+  /* puis la section choisie glisse depuis le bas par-dessus.  */
+  .ig-settings-layout { position: relative; display: block; }
+  .ig-settings-backdrop { display: none; }
+  .ig-settings-content {
+    display: none;
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 1200;
+    max-height: 88vh;
+    overflow-y: auto;
+    background: var(--paper);
+    border-radius: 18px 18px 0 0;
+    box-shadow: 0 -12px 40px rgba(0,0,0,.28);
+    padding: 0 1.1rem 2rem;
+    animation: ig-sheet-up .22s ease-out;
+  }
+  .ig-settings-sheet-open .ig-settings-content { display: block; }
+  .ig-settings-sheet-open .ig-settings-backdrop {
+    display: block;
+    position: fixed;
+    inset: 0;
+    z-index: 1100;
+    background: rgba(0,0,0,.4);
+  }
+  .ig-settings-sheet-open .ig-settings-menu { display: none; }
+  .ig-settings-sheet-head {
+    display: flex;
+    align-items: center;
+    gap: .8rem;
+    position: sticky;
+    top: 0;
+    background: var(--paper);
+    padding: 1rem 0 .8rem;
+    margin-bottom: .4rem;
+  }
+  .ig-settings-sheet-head strong { font-size: 1rem; }
+  .ig-settings-sheet-close {
+    width: 30px; height: 30px;
+    display: grid; place-items: center;
+    border-radius: 50%;
+    background: #eef0ed;
+    font-size: 1.2rem;
+    color: inherit;
+    text-decoration: none;
+  }
+  .ig-settings-page:not(.ig-settings-sheet-open) .ig-settings-content { display: none; }
+}
+
+@media (min-width: 769px) {
+  .ig-settings-sheet-head,
+  .ig-settings-backdrop { display: none; }
+}
+
+@keyframes ig-sheet-up {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}

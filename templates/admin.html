@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% block title %}Administration — InstaShoot{% endblock %}
+{% block content %}
+<section class="results" style="max-width:1000px;">
+  <h1>Administration</h1>
+
+  <div class="admin-stats-grid">
+    <div class="admin-stat-card"><strong>{{ stats.clients }}</strong><span>Clients</span></div>
+    <div class="admin-stat-card"><strong>{{ stats.photographes }}</strong><span>Photographes</span></div>
+    <div class="admin-stat-card"><strong>{{ stats.reservations_en_cours }}</strong><span>Demandes en cours</span></div>
+    <div class="admin-stat-card"><strong>{{ stats.reservations_terminees }}</strong><span>Prestations terminées</span></div>
+  </div>
+
+  <h2 style="margin-top:2rem;">Photographes — certification</h2>
+  <p class="empty-state" style="text-align:left;padding:1rem 0;">
+    La certification est <strong>automatique</strong> : chaque photographe peut la demander lui-même depuis son profil,
+    et le site vérifie seul des critères objectifs (photo de profil, présentation, spécialités, tarif, au moins 3 photos
+    publiées, note moyenne correcte s'il a des avis). Tu n'as normalement rien à faire ici — les boutons ci-dessous
+    servent seulement de <strong>correction manuelle exceptionnelle</strong> (ex: retirer un badge en cas d'abus).
+  </p>
+  <div class="demandes-liste">
+    {% for p in photographes %}
+      {% set eligible, manquants = eligibilites[p.id] %}
+      <div class="demande-card">
+        <div class="demande-header">
+          <h3>{{ p.nom }} {% if p.profil_photographe and p.profil_photographe.certifie %}<span class="badge-certifie" title="Certifié">✔ Certifié</span>{% endif %}</h3>
+          <span class="tag">{{ p.ville or "Ville non renseignée" }}</span>
+        </div>
+        <p class="demande-meta">
+          Note moyenne : {{ p.profil_photographe.note_moyenne if p.profil_photographe else "—" }}/5
+          · Tarif : {{ p.profil_photographe.tarif_min if p.profil_photographe else "—" }} FCFA
+        </p>
+        {% if not p.profil_photographe or not p.profil_photographe.certifie %}
+          {% if eligible %}
+            <p class="demande-message">✔ Remplit déjà tous les critères — sera certifié dès qu'il/elle cliquera sur "Demander la certification".</p>
+          {% else %}
+            <p class="demande-message">Manque encore : {{ manquants|join(' · ') }}</p>
+          {% endif %}
+        {% endif %}
+        <form method="post" action="{{ url_for('certifier_photographe', photographe_id=p.id) }}">
+          {% if p.profil_photographe and p.profil_photographe.certifie %}
+            <button type="submit" class="btn btn-outline btn-sm">Retirer la certification (exceptionnel)</button>
+          {% else %}
+            <button type="submit" class="btn btn-outline btn-sm">Certifier manuellement (exceptionnel)</button>
+          {% endif %}
+        </form>
+      </div>
+    {% else %}
+      <p class="empty-state">Aucun photographe inscrit pour l'instant.</p>
+    {% endfor %}
+  </div>
+</section>
+{% endblock %}

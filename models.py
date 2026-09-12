@@ -17,6 +17,7 @@ class Utilisateur(db.Model):
     avatar_url = db.Column(db.String(255))
     bio = db.Column(db.String(255))
     profil_public = db.Column(db.Boolean, default=True)
+    est_admin = db.Column(db.Boolean, default=False)
     qui_peut_contacter = db.Column(db.String(30), default="tous")
     commentaires_autorises = db.Column(db.Boolean, default=True)
     tags_autorises = db.Column(db.Boolean, default=True)
@@ -186,6 +187,8 @@ class Reservation(db.Model):
     message = db.Column(db.Text, nullable=False)
     statut = db.Column(db.String(20), default="en_attente")
     devis = db.Column(db.Integer, nullable=True)
+    acompte_paye = db.Column(db.Boolean, default=False)
+    montant_acompte = db.Column(db.Integer)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     client = db.relationship("Utilisateur", foreign_keys=[client_id])
     photographe = db.relationship("Utilisateur", foreign_keys=[photographe_id])
@@ -195,11 +198,13 @@ class Avis(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     client_id = db.Column(db.Integer, db.ForeignKey("utilisateur.id"), nullable=False)
     photographe_id = db.Column(db.Integer, db.ForeignKey("utilisateur.id"), nullable=False)
+    reservation_id = db.Column(db.Integer, db.ForeignKey("reservation.id"), nullable=True)
     note = db.Column(db.Integer, nullable=False)
     commentaire = db.Column(db.Text)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     client = db.relationship("Utilisateur", foreign_keys=[client_id])
     photographe = db.relationship("Utilisateur", foreign_keys=[photographe_id])
+    reservation = db.relationship("Reservation", foreign_keys=[reservation_id])
 
 
 class Message(db.Model):

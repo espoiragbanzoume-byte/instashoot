@@ -92,6 +92,7 @@
                 <a href="{{ url_for('parametres') }}">Paramètres</a>
                 <a href="{{ url_for('notifications') }}">Notifications{% if notifications_non_lues %}<b>{{ notifications_non_lues }}</b>{% endif %}</a>
                 <a href="{{ url_for('messagerie') }}">Messages{% if messages_non_lus %}<b>{{ messages_non_lus }}</b>{% endif %}</a>
+                {% if utilisateur_courant.est_admin %}<a href="{{ url_for('admin_dashboard') }}">Administration</a>{% endif %}
                 <div class="menu-separator"></div>
                 <button type="button" class="logout-menu logout-menu-neutral" onclick="ouvrirModalDeconnexion()"><span class="logout-menu-icon">↪</span><span>Se déconnecter</span></button>
               </div>
@@ -237,8 +238,18 @@
     </div>
   </div>
 
+  {% with flashed = get_flashed_messages(with_categories=true) %}
+    {% if flashed %}
+      <div class="flash-messages-wrap">
+        {% for categorie, msg in flashed %}
+          <div class="flash-message flash-{{ categorie }}">{{ msg }}</div>
+        {% endfor %}
+      </div>
+    {% endif %}
+  {% endwith %}
   {% block content %}{% endblock %}
 
+  {% if not masquer_pied_de_page %}
   <footer class="footer footer-modern">
     <div class="footer-content">
       <div class="footer-col">
@@ -258,6 +269,7 @@
     </div>
     <p class="footer-copyright">&copy; 2026 InstaShoot — Bénin</p>
   </footer>
+  {% endif %}
 
   {# ==== Barre de navigation mobile façon Instagram (masquée sur desktop) ==== #}
   <nav class="mobile-ig-tabbar" aria-label="Navigation principale mobile">

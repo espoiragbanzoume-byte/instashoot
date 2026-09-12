@@ -1,7 +1,8 @@
 {% extends "base.html" %}
 {% block title %}Paramètres — InstaShoot{% endblock %}
+{% set masquer_pied_de_page = true %}
 {% block content %}
-<section class="ig-settings-page">
+<section class="ig-settings-page{{ ' ig-settings-sheet-open' if section_choisie else '' }}">
   <div class="ig-settings-head">
     <a href="{{ url_for('mon_profil') }}" class="settings-back" aria-label="Retour">‹</a>
     <div><h1>Paramètres</h1><p>Gérez votre compte, votre confidentialité et votre sécurité.</p></div>
@@ -11,6 +12,7 @@
   {% endwith %}
 
   <div class="ig-settings-layout">
+    <a href="{{ url_for('parametres') }}" class="ig-settings-backdrop" aria-hidden="true" tabindex="-1"></a>
     <aside class="ig-settings-menu">
       <a class="{{ 'active' if section=='compte' else '' }}" href="{{ url_for('parametres', section='compte') }}"><span>👤</span><div><strong>Compte</strong><small>Email, téléphone, ville</small></div><b>›</b></a>
       <a class="{{ 'active' if section=='profil' else '' }}" href="{{ url_for('parametres', section='profil') }}"><span>✎</span><div><strong>Modifier le profil</strong><small>Nom, photo, bio et informations pro</small></div><b>›</b></a>
@@ -24,6 +26,18 @@
     </aside>
 
     <main class="ig-settings-content">
+      <div class="ig-settings-sheet-head">
+        <a href="{{ url_for('parametres') }}" class="ig-settings-sheet-close" aria-label="Retour aux paramètres">‹</a>
+        <strong>
+          {% if section=='compte' %}Compte
+          {%- elif section=='profil' %}Modifier le profil
+          {%- elif section=='confidentialite' %}Confidentialité
+          {%- elif section=='notifications' %}Notifications
+          {%- elif section=='professionnel' %}Professionnel
+          {%- elif section=='securite' %}Sécurité
+          {%- endif %}
+        </strong>
+      </div>
       {% if section=='compte' %}
       <div class="settings-section">
         <h2>Compte</h2><p class="settings-section-intro">Vos informations de connexion et de contact. Les modifications se font ici, sans quitter les paramètres.</p>

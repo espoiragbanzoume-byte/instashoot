@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% block title %}Notifications — InstaShoot{% endblock %}
+{% set masquer_pied_de_page = true %}
 {% block content %}
 <section class="results notifications-page">
   <div class="notifications-head"><div><p class="eyebrow">CENTRE D’ACTIVITÉ</p><h1>Notifications</h1><p class="page-intro">Retrouvez les demandes, albums, interactions et activités importantes de votre compte.</p></div>{% if notifications|selectattr('lu','equalto',false)|list|length %}<form method="post" action="{{ url_for('lire_toutes_notifications') }}"><button class="btn btn-outline btn-sm">Tout marquer comme lu</button></form>{% endif %}</div>
