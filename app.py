@@ -925,6 +925,7 @@ def inscription_ajax():
 
     db.session.commit()
     session["utilisateur_id"] = u.id
+    envoyer_email_bienvenue_async(u)
     return {"ok": True}
 
 
@@ -962,6 +963,7 @@ def inscription():
 
         db.session.commit()
         session["utilisateur_id"] = u.id
+        envoyer_email_bienvenue_async(u)
         return redirect(url_for("accueil"))
 
     return render_template("inscription.html", role=role)
