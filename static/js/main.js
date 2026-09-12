@@ -103,7 +103,11 @@ function basculerOngletProfil(nom, boutonClique, pushUrl = true) {
   });
 
   const panel = document.getElementById("onglet-" + nom);
-  if (panel) panel.style.display = "block";
+  if (panel) {
+    panel.style.display = "block";
+    panel.style.opacity = "0";
+    requestAnimationFrame(() => { panel.style.opacity = "1"; });
+  }
   if (boutonClique) boutonClique.classList.add("active");
 
   if (pushUrl) {
