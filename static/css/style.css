@@ -4166,3 +4166,33 @@ button:disabled, .btn:disabled, [disabled] { cursor: not-allowed; }
   transform: scale(.97);
 }
 .mobile-ig-tab:active, .mobile-ig-header-icon:active { opacity: .55; }
+
+/* ============================
+   Barre de recherche premium (accueil) + correction "Voir tout"
+   ============================ */
+.search-icon { width: 19px; height: 19px; flex-shrink: 0; color: var(--charcoal); margin-left: .3rem; }
+.search-trigger .search-bar {
+  gap: .6rem;
+  border-radius: 999px;
+  padding: .55rem .55rem .55rem 0;
+}
+
+@media (max-width: 680px) {
+  .hero { margin: 2.4rem auto 2.6rem; padding: 0 1.1rem; }
+  .hero h1 { font-size: 1.7rem !important; letter-spacing: -.03em !important; line-height: 1.15 !important; }
+  .hero h1::after { margin-top: 14px !important; }
+  .hero p { font-size: .92rem; margin: 14px auto 22px !important; }
+
+  /* Un seul pill : icône + texte, le bouton "Rechercher" séparé disparaît */
+  /* pour éviter qu'il retombe à la ligne et casse la mise en page. */
+  .search-cta { display: none; }
+  .search-trigger .search-bar { padding: .75rem 1rem; }
+  .search-placeholder { padding: 0 !important; font-size: .88rem; }
+
+  /* "Photographes à découvrir" : le bouton "Voir tout" s'aligne avec */
+  /* la première ligne du titre au lieu de se centrer sur 2 lignes    */
+  /* et de sembler flotter par-dessus la grille en dessous.          */
+  .decouverte-header { align-items: flex-start; gap: .6rem; }
+  .decouverte-header h2 { font-size: 1.15rem; line-height: 1.25; }
+  .decouverte-header .btn { flex-shrink: 0; padding: .45rem .8rem !important; font-size: .78rem !important; }
+}
