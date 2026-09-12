@@ -3800,3 +3800,181 @@ input[type="date"]{
 .recovery-skip{display:block;text-align:center;margin:1rem auto .15rem;color:var(--charcoal);font-size:.82rem;font-weight:700;text-decoration:underline;text-underline-offset:3px}
 .recovery-skip:hover{opacity:.7}
 .recovery-skip-hint{text-align:center;margin:0;color:#777;font-size:.72rem;line-height:1.4}
+
+/* ============================
+   Navigation mobile façon Instagram
+   (en-tête + barre du bas — masquées sur desktop)
+   ============================ */
+.mobile-ig-header,
+.mobile-ig-tabbar { display: none; }
+
+@media (max-width: 768px) {
+  .navbar { display: none; }
+
+  .mobile-ig-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+    height: 52px;
+    padding: 0 14px;
+    background: #000;
+    border-bottom: 1px solid #262626;
+  }
+  .mobile-ig-header-logo {
+    color: #fff;
+    font-family: var(--font-display);
+    font-size: 1.3rem;
+    font-weight: 700;
+    letter-spacing: -.03em;
+  }
+  .mobile-ig-header-right { display: flex; align-items: center; gap: 18px; }
+  .mobile-ig-header-icon {
+    position: relative;
+    display: grid;
+    place-items: center;
+    width: 26px;
+    height: 26px;
+    color: #fff;
+    background: none;
+    border: 0;
+    padding: 0;
+    cursor: pointer;
+  }
+  .mobile-ig-header-icon svg { width: 24px; height: 24px; }
+  .mobile-ig-badge {
+    position: absolute;
+    top: -5px;
+    right: -7px;
+    min-width: 16px;
+    height: 16px;
+    padding: 0 4px;
+    border-radius: 99px;
+    background: var(--accent);
+    color: #fff;
+    font-size: .6rem;
+    font-weight: 800;
+    display: grid;
+    place-items: center;
+    line-height: 1;
+  }
+
+  .mobile-ig-tabbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-around;
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 1000;
+    height: 54px;
+    padding-bottom: env(safe-area-inset-bottom, 0);
+    background: #000;
+    border-top: 1px solid #262626;
+  }
+  .mobile-ig-tab {
+    position: relative;
+    display: grid;
+    place-items: center;
+    flex: 1;
+    height: 100%;
+    color: #a8a8a8;
+    background: none;
+    border: 0;
+    cursor: pointer;
+  }
+  .mobile-ig-tab svg { width: 25px; height: 25px; }
+  .mobile-ig-tab.is-active { color: #fff; }
+  .mobile-ig-tab.is-active svg { stroke-width: 2.4; }
+  .mobile-ig-tab-avatar img,
+  .mobile-ig-tab-avatar span {
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    object-fit: cover;
+    display: grid;
+    place-items: center;
+    background: #333;
+    color: #fff;
+    font-size: .7rem;
+    font-weight: 800;
+  }
+  .mobile-ig-tab-avatar.is-active img,
+  .mobile-ig-tab-avatar.is-active span { box-shadow: 0 0 0 2px #fff; }
+  .mobile-ig-badge-tab { top: 2px; right: calc(50% - 20px); }
+
+  /* Laisser de la place pour l'en-tête fixe et la barre du bas */
+  body { padding-bottom: 54px; }
+  .footer { margin-bottom: 0; }
+}
+
+/* ============================
+   Rangée de "stories" sur le fil Inspiration
+   ============================ */
+.ig-stories-row {
+  display: flex;
+  gap: 16px;
+  overflow-x: auto;
+  padding: 14px 16px 18px;
+  scrollbar-width: none;
+}
+.ig-stories-row::-webkit-scrollbar { display: none; }
+.ig-story {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  flex: 0 0 auto;
+  width: 68px;
+  color: inherit;
+  text-align: center;
+}
+.ig-story-ring {
+  width: 62px;
+  height: 62px;
+  border-radius: 50%;
+  padding: 2.5px;
+  background: linear-gradient(45deg, #feda75, #d62976, #962fbf, #4f5bd5);
+  display: grid;
+  place-items: center;
+}
+.ig-story-ring.is-self { background: var(--line); position: relative; }
+.ig-story-ring img,
+.ig-story-ring span.ig-story-fallback {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2.5px solid var(--paper);
+  display: grid;
+  place-items: center;
+  background: #dedfdb;
+  font-weight: 800;
+  color: #444;
+}
+.ig-story-plus {
+  position: absolute;
+  bottom: -2px;
+  right: -2px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #3897f0;
+  color: #fff;
+  display: grid;
+  place-items: center;
+  font-size: .85rem;
+  font-weight: 800;
+  border: 2px solid var(--paper);
+}
+.ig-story-name {
+  font-size: .68rem;
+  font-weight: 600;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

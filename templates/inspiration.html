@@ -13,6 +13,31 @@
   </header>
 
   {% if publications %}
+    {% set auteurs_stories = publications|map(attribute='auteur')|unique(attribute='id')|list %}
+    <div class="ig-stories-row">
+      {% if utilisateur_courant %}
+        <a href="{{ url_for('mon_profil') if utilisateur_courant.role == 'photographe' else url_for('photographes') }}" class="ig-story">
+          <span class="ig-story-ring is-self">
+            {% if utilisateur_courant.avatar_url %}<img src="{{ utilisateur_courant.avatar_url }}" alt="">{% else %}<span class="ig-story-fallback">{{ utilisateur_courant.nom[:1]|upper }}</span>{% endif %}
+            <span class="ig-story-plus">+</span>
+          </span>
+          <span class="ig-story-name">Votre story</span>
+        </a>
+      {% else %}
+        <button type="button" class="ig-story" onclick="ouvrirModalInscription()" style="border:0;background:none;cursor:pointer;">
+          <span class="ig-story-ring is-self"><span class="ig-story-fallback">+</span></span>
+          <span class="ig-story-name">Rejoindre</span>
+        </button>
+      {% endif %}
+      {% for auteur in auteurs_stories %}
+        <a href="{{ url_for('profil_photographe', photographe_id=auteur.id) }}" class="ig-story">
+          <span class="ig-story-ring">
+            {% if auteur.avatar_url %}<img src="{{ auteur.avatar_url }}" alt="">{% else %}<span class="ig-story-fallback">{{ auteur.nom[:1]|upper }}</span>{% endif %}
+          </span>
+          <span class="ig-story-name">{{ auteur.nom.split(' ')[0] }}</span>
+        </a>
+      {% endfor %}
+    </div>
     <div class="inspiration-post-feed">
       {% for pub in publications %}
         {% set pub = pub %}

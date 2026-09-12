@@ -1,4 +1,5 @@
 import os
+import threading
 import uuid
 import secrets
 import hashlib
@@ -12,8 +13,8 @@ from datetime import date, datetime, timedelta
 from models import db, Utilisateur, ProfilPhotographe, Album, PortfolioPhoto, Reservation, Avis, Publication, Abonnement, Message, PublicationLike, Commentaire, Enregistrement, Repost, Notification, DemandeReinitialisationMotDePasse
 
 app = Flask(__name__)
-app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///photoconnect.db"
-app.config["SECRET_KEY"] = "cle-de-developpement-a-changer-plus-tard"
+app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get("DATABASE_URL", "sqlite:///photoconnect.db")
+app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY", "cle-de-developpement-a-changer-plus-tard")
 app.config["UPLOAD_FOLDER"] = os.path.join(app.static_folder, "uploads")
 app.config["MAX_CONTENT_LENGTH"] = 40 * 1024 * 1024  # 40 Mo par requête (plusieurs photos à la fois)
 
@@ -998,11 +999,12 @@ def envoyer_email_gmail(email_destinataire, sujet, contenu):
         return False
 
 
-def envoyer_email_bienvenue(utilisateur):
+def envoyer_email_bienvenue(email, prenom=""):
     """Envoie un message de bienvenue après une connexion réussie.
-    L'échec de l'envoi ne bloque jamais la connexion.
+    N'utilise que des valeurs déjà extraites (pas d'objet SQLAlchemy) car
+    cette fonction est appelée depuis un thread séparé de la requête.
     """
-    prenom = (getattr(utilisateur, "nom", "") or "").strip()
+    prenom = (prenom or "").strip()
     nom_affiche = f" {prenom}" if prenom else ""
 
     contenu = f"""Bonjour{nom_affiche},
@@ -1020,10 +1022,21 @@ Si vous n'êtes pas à l'origine de cette connexion, nous vous recommandons de v
 L'équipe InstaShoot
 """
     return envoyer_email_gmail(
-        utilisateur.email,
+        email,
         "Bienvenue sur InstaShoot 👋",
         contenu
     )
+
+
+def envoyer_email_bienvenue_async(utilisateur):
+    """Lance l'envoi de l'email de bienvenue dans un thread séparé pour ne
+    jamais ralentir la réponse de connexion (le SMTP Gmail peut prendre
+    plusieurs secondes, voire expirer)."""
+    email = utilisateur.email
+    prenom = utilisateur.nom
+    threading.Thread(
+        target=envoyer_email_bienvenue, args=(email, prenom), daemon=True
+    ).start()
 
 
 def envoyer_code_reinitialisation(email_destinataire, code):
@@ -1215,7 +1228,7 @@ def connexion_ajax():
         return {"ok": False, "message": "Email ou mot de passe incorrect."}, 401
 
     session["utilisateur_id"] = u.id
-    envoyer_email_bienvenue(u)
+    envoyer_email_bienvenue_async(u)
     return {"ok": True, "nom": u.nom}
 
 
@@ -1231,7 +1244,7 @@ def connexion():
             return render_template("connexion.html", message="Email ou mot de passe incorrect.", next=next_url)
 
         session["utilisateur_id"] = u.id
-        envoyer_email_bienvenue(u)
+        envoyer_email_bienvenue_async(u)
         return redirect(next_url if redirection_sure(next_url) else url_for("accueil"))
 
     return render_template("connexion.html", next=next_url)
@@ -1288,10 +1301,12 @@ def migrer_sqlite():
             cols={c["name"] for c in insp.get_columns("publication")}
             if "album_id" not in cols: conn.execute(text("ALTER TABLE publication ADD COLUMN album_id INTEGER"))
 
+with app.app_context():
+    db.create_all()
+    migrer_sqlite()
+    db.create_all()
+    seeder_donnees_demo()
+
 if __name__ == "__main__":
-    with app.app_context():
-        db.create_all()
-        migrer_sqlite()
-        db.create_all()
-        seeder_donnees_demo()
-    app.run(debug=True)
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host="0.0.0.0", port=port, debug=True)
