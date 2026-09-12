@@ -25,7 +25,7 @@
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
       </button>
     {% endif %}
-    <a href="{{ url_for('inspiration') }}" class="mobile-ig-header-logo">InstaShoot</a>
+    <a href="{{ url_for('accueil') }}" class="mobile-ig-header-logo">InstaShoot</a>
     <div class="mobile-ig-header-right">
       {% if utilisateur_courant %}
         <a href="{{ url_for('messagerie') }}" class="mobile-ig-header-icon" aria-label="Messages">
@@ -273,10 +273,10 @@
 
   {# ==== Barre de navigation mobile façon Instagram (masquée sur desktop) ==== #}
   <nav class="mobile-ig-tabbar" aria-label="Navigation principale mobile">
-    <a href="{{ url_for('inspiration') }}" class="mobile-ig-tab {{ 'is-active' if request.endpoint == 'inspiration' else '' }}" aria-label="Accueil">
+    <a href="{{ url_for('accueil') }}" class="mobile-ig-tab {{ 'is-active' if request.endpoint == 'accueil' else '' }}" aria-label="Accueil">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h5v-6h4v6h5V10"/></svg>
     </a>
-    <a href="{{ url_for('photographes') }}" class="mobile-ig-tab {{ 'is-active' if request.endpoint == 'photographes' else '' }}" aria-label="Rechercher">
+    <a href="{{ url_for('inspiration') }}" class="mobile-ig-tab {{ 'is-active' if request.endpoint == 'inspiration' else '' }}" aria-label="Explorer">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
     </a>
     {% if utilisateur_courant and utilisateur_courant.role == 'photographe' %}

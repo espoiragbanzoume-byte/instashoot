@@ -15,11 +15,11 @@
   </header>
 
   {% if pub.album and pub.album.photos %}
-    <div class="pc-carousel" data-carousel="{{ pub.id }}">
+    <div class="pc-carousel pc-doubletap-zone" data-carousel="{{ pub.id }}" data-like-url="{{ url_for('liker_publication', publication_id=pub.id) }}" data-post-id="{{ pub.id }}" data-connecte="{{ '1' if utilisateur_courant else '' }}">
       <div class="pc-carousel-track">
         {% for photo in pub.album.photos %}
           <div class="pc-carousel-slide {% if loop.first %}active{% endif %}">
-            <img src="{{ photo.image_url }}" alt="Publication de {{ pub.auteur.nom }} — photo {{ loop.index }}" loading="lazy">
+            <img src="{{ photo.image_url }}" alt="Publication de {{ pub.auteur.nom }} — photo {{ loop.index }}" loading="lazy" class="pc-fade-img" onload="this.classList.add('is-loaded')">
           </div>
         {% endfor %}
       </div>
@@ -35,8 +35,8 @@
       {% endif %}
     </div>
   {% else %}
-    <a href="{{ url_for('voir_publication', publication_id=pub.id) }}" class="pc-post-image-link">
-      <img src="{{ pub.image_url }}" alt="{{ pub.legende or 'Publication de ' ~ pub.auteur.nom }}" class="pc-post-image" loading="lazy">
+    <a href="{{ url_for('voir_publication', publication_id=pub.id) }}" class="pc-post-image-link pc-doubletap-zone" data-like-url="{{ url_for('liker_publication', publication_id=pub.id) }}" data-post-id="{{ pub.id }}" data-connecte="{{ '1' if utilisateur_courant else '' }}">
+      <img src="{{ pub.image_url }}" alt="{{ pub.legende or 'Publication de ' ~ pub.auteur.nom }}" class="pc-post-image pc-fade-img" loading="lazy" onload="this.classList.add('is-loaded')">
     </a>
   {% endif %}
 

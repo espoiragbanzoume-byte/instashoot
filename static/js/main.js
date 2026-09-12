@@ -103,11 +103,7 @@ function basculerOngletProfil(nom, boutonClique, pushUrl = true) {
   });
 
   const panel = document.getElementById("onglet-" + nom);
-  if (panel) {
-    panel.style.display = "block";
-    panel.style.opacity = "0";
-    requestAnimationFrame(() => { panel.style.opacity = "1"; });
-  }
+  if (panel) panel.style.display = "block";
   if (boutonClique) boutonClique.classList.add("active");
 
   if (pushUrl) {
@@ -437,6 +433,58 @@ document.addEventListener('submit', async (event) => {
     }
   } catch (err) { afficherToast(err.message || 'Une erreur est survenue.'); }
   finally { form.dataset.busy='0'; }
+});
+
+// ============================
+// Double-tap pour liker une photo (geste signature façon Instagram)
+// ============================
+const derniersTaps = new WeakMap();
+
+function afficherCoeurFlottant(zone) {
+  const coeur = document.createElement('div');
+  coeur.className = 'pc-doubletap-heart';
+  coeur.innerHTML = '<svg viewBox="0 0 24 24"><path d="M20.8 8.7c0 5.5-8.8 10.3-8.8 10.3S3.2 14.2 3.2 8.7A4.7 4.7 0 0 1 12 6.2a4.7 4.7 0 0 1 8.8 2.5Z"/></svg>';
+  zone.appendChild(coeur);
+  coeur.addEventListener('animationend', () => coeur.remove());
+}
+
+async function liker_depuis_doubletap(zone) {
+  const url = zone.dataset.likeUrl;
+  const postId = zone.dataset.postId;
+  if (!url || !postId) return;
+  const carte = document.getElementById('publication-' + postId);
+  const bouton = carte ? carte.querySelector('.pc-post-actions .pc-action') : null;
+  if (bouton && bouton.classList.contains('active')) return; // déjà aimée : juste l'animation, pas de requête
+
+  try {
+    const reponse = await fetch(url, { method: 'POST', headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' } });
+    const data = await reponse.json();
+    if (bouton) {
+      if ('liked' in data) bouton.classList.toggle('active', data.liked);
+      const compteur = bouton.querySelector('span');
+      if (compteur && 'count' in data) compteur.textContent = data.count;
+    }
+  } catch (e) { /* échec silencieux : l'animation reste visible, ce n'est pas grave */ }
+}
+
+document.addEventListener('click', (event) => {
+  const zone = event.target.closest('.pc-doubletap-zone');
+  if (!zone || event.target.closest('button, .pc-carousel-arrow, .pc-carousel-dot')) return;
+
+  const maintenant = Date.now();
+  const dernier = derniersTaps.get(zone) || 0;
+  derniersTaps.set(zone, maintenant);
+
+  if (maintenant - dernier < 350) {
+    if (!zone.dataset.connecte) {
+      ouvrirModalConnexion();
+      derniersTaps.set(zone, 0);
+      return;
+    }
+    afficherCoeurFlottant(zone);
+    liker_depuis_doubletap(zone);
+    derniersTaps.set(zone, 0); // évite un triple-tap qui relancerait un double-tap
+  }
 });
 
 function initialiserControlesModernes() {
