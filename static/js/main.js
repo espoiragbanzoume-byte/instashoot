@@ -852,3 +852,38 @@ document.addEventListener('click', function(event) {
   event.preventDefault();
   togglePasswordVisibility(button);
 });
+
+// ============================
+// Swipe horizontal entre les onglets du profil (façon Instagram)
+// ============================
+(function () {
+  let depart = null;
+
+  document.addEventListener('touchstart', (e) => {
+    const panel = e.target.closest('.ig-panel');
+    if (!panel || e.touches.length !== 1) { depart = null; return; }
+    depart = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+  }, { passive: true });
+
+  document.addEventListener('touchend', (e) => {
+    if (!depart) return;
+    const touche = e.changedTouches[0];
+    const dx = touche.clientX - depart.x;
+    const dy = touche.clientY - depart.y;
+    depart = null;
+
+    // Ignore : trop court, ou plus vertical qu'horizontal (c'est un scroll)
+    if (Math.abs(dx) < 55 || Math.abs(dx) < Math.abs(dy) * 1.4) return;
+
+    const onglets = Array.from(document.querySelectorAll('.ig-tabs .ig-tab'));
+    if (!onglets.length) return;
+    const indexActif = onglets.findIndex((t) => t.classList.contains('active'));
+    if (indexActif === -1) return;
+
+    const indexSuivant = dx < 0 ? indexActif + 1 : indexActif - 1; // swipe vers la gauche = onglet suivant
+    if (indexSuivant < 0 || indexSuivant >= onglets.length) return;
+
+    const bouton = onglets[indexSuivant];
+    basculerOngletProfil(bouton.dataset.tab, bouton);
+  }, { passive: true });
+})();

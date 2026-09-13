@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+{% block title %}Story de {{ auteur.nom }} — InstaShoot{% endblock %}
+{% set masquer_pied_de_page = true %}
+{% block content %}
+<section class="story-viewer" id="story-viewer" data-total="{{ stories|length }}">
+  <div class="story-viewer-bars">
+    {% for s in stories %}<span class="story-bar" data-index="{{ loop.index0 }}"><span></span></span>{% endfor %}
+  </div>
+  <div class="story-viewer-head">
+    <span class="story-viewer-avatar">
+      {% if auteur.avatar_url %}<img src="{{ auteur.avatar_url }}" alt="">{% else %}{{ auteur.nom[:1]|upper }}{% endif %}
+    </span>
+    <strong>{{ auteur.nom }}</strong>
+    <a href="{{ url_for('inspiration') }}" class="story-viewer-close" aria-label="Fermer">✕</a>
+  </div>
+
+  <div class="story-viewer-slides">
+    {% for s in stories %}
+      <img src="{{ s.image_url }}" alt="Story de {{ auteur.nom }}" class="story-slide" data-index="{{ loop.index0 }}" style="display:{{ 'block' if loop.first else 'none' }}">
+    {% endfor %}
+  </div>
+
+  <button type="button" class="story-viewer-zone story-viewer-prev" aria-label="Story précédente"></button>
+  <button type="button" class="story-viewer-zone story-viewer-next" aria-label="Story suivante"></button>
+</section>
+
+<script>
+(function () {
+  const total = parseInt(document.getElementById('story-viewer').dataset.total, 10);
+  let index = 0;
+  let timer = null;
+  const DUREE = 5000;
+
+  function afficher(i) {
+    if (i < 0) i = 0;
+    if (i >= total) { window.location.href = "{{ url_for('inspiration') }}"; return; }
+    index = i;
+    document.querySelectorAll('.story-slide').forEach((img) => {
+      img.style.display = (parseInt(img.dataset.index, 10) === index) ? 'block' : 'none';
+    });
+    document.querySelectorAll('.story-bar').forEach((bar) => {
+      const i2 = parseInt(bar.dataset.index, 10);
+      const inner = bar.querySelector('span');
+      inner.style.transition = 'none';
+      inner.style.width = i2 < index ? '100%' : '0%';
+      if (i2 === index) {
+        requestAnimationFrame(() => {
+          inner.style.transition = `width ${DUREE}ms linear`;
+          inner.style.width = '100%';
+        });
+      }
+    });
+    clearTimeout(timer);
+    timer = setTimeout(() => afficher(index + 1), DUREE);
+  }
+
+  document.querySelector('.story-viewer-prev').addEventListener('click', () => afficher(index - 1));
+  document.querySelector('.story-viewer-next').addEventListener('click', () => afficher(index + 1));
+
+  afficher(0);
+})();
+</script>
+{% endblock %}

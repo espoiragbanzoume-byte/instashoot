@@ -10,7 +10,7 @@ from email.utils import formataddr
 from werkzeug.utils import secure_filename
 from flask import Flask, render_template, request, redirect, url_for, session, flash, jsonify
 from datetime import date, datetime, timedelta
-from models import db, Utilisateur, ProfilPhotographe, Album, PortfolioPhoto, Reservation, Avis, Publication, Abonnement, Message, PublicationLike, Commentaire, Enregistrement, Repost, Notification, DemandeReinitialisationMotDePasse
+from models import db, Utilisateur, ProfilPhotographe, Album, PortfolioPhoto, Reservation, Avis, Publication, Abonnement, Message, PublicationLike, Commentaire, Enregistrement, Repost, Notification, DemandeReinitialisationMotDePasse, Story
 
 app = Flask(__name__)
 app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get("DATABASE_URL", "sqlite:///photoconnect.db")
@@ -977,7 +977,52 @@ def inspiration():
         .order_by(Publication.created_at.desc())
         .all()
     )
-    return render_template("inspiration.html", publications=publications)
+    seuil_stories = datetime.utcnow() - timedelta(hours=24)
+    stories_actives = (
+        Story.query
+        .filter(Story.created_at >= seuil_stories)
+        .order_by(Story.created_at.desc())
+        .all()
+    )
+    auteurs_stories = []
+    ids_vus = set()
+    for s in stories_actives:
+        if s.utilisateur_id not in ids_vus:
+            ids_vus.add(s.utilisateur_id)
+            auteurs_stories.append(s.utilisateur)
+    return render_template("inspiration.html", publications=publications, auteurs_stories=auteurs_stories)
+
+
+@app.route("/story/publier", methods=["POST"])
+def publier_story():
+    if "utilisateur_id" not in session:
+        flash("Connectez-vous pour publier une story.", "error")
+        return redirect(url_for("inspiration"))
+    fichier = request.files.get("image")
+    url_image = enregistrer_image(fichier)
+    if not url_image:
+        flash("Choisissez une image valide pour votre story.", "error")
+        return redirect(request.referrer or url_for("inspiration"))
+    db.session.add(Story(utilisateur_id=session["utilisateur_id"], image_url=url_image))
+    db.session.commit()
+    flash("Votre story a été publiée pour 24h.", "success")
+    return redirect(request.referrer or url_for("inspiration"))
+
+
+@app.route("/story/<int:utilisateur_id>")
+def voir_story(utilisateur_id):
+    seuil_stories = datetime.utcnow() - timedelta(hours=24)
+    stories = (
+        Story.query
+        .filter(Story.utilisateur_id == utilisateur_id, Story.created_at >= seuil_stories)
+        .order_by(Story.created_at.asc())
+        .all()
+    )
+    if not stories:
+        flash("Cette story n'est plus disponible.", "error")
+        return redirect(url_for("inspiration"))
+    auteur = stories[0].utilisateur
+    return render_template("story_voir.html", stories=stories, auteur=auteur)
 
 
 @app.route("/messages", methods=["GET", "POST"])

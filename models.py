@@ -228,3 +228,14 @@ class Notification(db.Model):
     lu = db.Column(db.Boolean, default=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     destinataire = db.relationship("Utilisateur", foreign_keys=[destinataire_id], backref="notifications")
+
+
+class Story(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    utilisateur_id = db.Column(db.Integer, db.ForeignKey("utilisateur.id"), nullable=False)
+    image_url = db.Column(db.String(255), nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    utilisateur = db.relationship("Utilisateur", foreign_keys=[utilisateur_id], backref="stories")
+
+    def expiree(self):
+        return (datetime.utcnow() - self.created_at).total_seconds() > 24 * 3600
