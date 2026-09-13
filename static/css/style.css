@@ -4194,3 +4194,73 @@ input[type="date"]{
 .pc-fade-img.is-loaded {
   opacity: 1;
 }
+
+/* ============================
+   Icônes d'onglets de profil unifiées (grille / republications / enregistrements / activité)
+   ============================ */
+.tab-icon { width: 21px; height: 21px; flex-shrink: 0; }
+.ig-tab { display: flex; align-items: center; justify-content: center; }
+
+@media (max-width: 768px) {
+  .ig-tabs { display: flex; justify-content: space-around; gap: 0; overflow: visible; }
+  .ig-tab { flex: 1; padding: .85rem .2rem; }
+  .tab-icon { width: 23px; height: 23px; }
+
+  .ig-avatar { width: 66px; height: 66px; }
+  .ig-avatar-letter { font-size: 1.6rem; }
+  .ig-profile-head { gap: 1rem; }
+  .ig-name-row h1 { font-size: 1rem; }
+  .ig-settings-link { width: 28px; height: 28px; font-size: .85rem; }
+  .ig-profile-actions { display: flex; gap: 6px; }
+  .ig-profile-actions .btn { flex: 1; padding: .5rem .6rem !important; font-size: .78rem !important; border-radius: 8px !important; }
+}
+
+/* ============================
+   Finitions "premium" : le site doit donner la main (cursor)
+   sur tout élément cliquable, réagir au toucher, et transitionner
+   en douceur au lieu de changements instantanés et bruts.
+   ============================ */
+button, .btn, a.btn, [onclick], .ig-tab, .mobile-ig-tab, .mobile-ig-header-icon,
+.settings-row-button, .settings-menu-action, .album-delete-icon, .modal-close,
+select, input[type="submit"] {
+  cursor: pointer;
+}
+button:disabled, .btn:disabled, [disabled] { cursor: not-allowed; }
+
+.ig-panel { transition: opacity .18s ease; }
+
+.ig-tab { transition: color .15s ease, opacity .12s ease; }
+.ig-tab:active { opacity: .5; }
+
+.btn, button, .mobile-ig-tab, .mobile-ig-header-icon {
+  transition: transform .12s ease, opacity .12s ease, background-color .15s ease;
+}
+.btn:active, .settings-row-button:active, .settings-menu-action:active {
+  transform: scale(.97);
+}
+.mobile-ig-tab:active, .mobile-ig-header-icon:active { opacity: .55; }
+
+/* ============================
+   Barre de recherche premium (accueil) + correction "Voir tout"
+   ============================ */
+.search-icon { width: 19px; height: 19px; flex-shrink: 0; color: var(--charcoal); margin-left: .3rem; }
+.search-trigger .search-bar {
+  gap: .6rem;
+  border-radius: 999px;
+  padding: .55rem .55rem .55rem 0;
+}
+
+@media (max-width: 680px) {
+  .hero { margin: 2.4rem auto 2.6rem; padding: 0 1.1rem; }
+  .hero h1 { font-size: 1.7rem !important; letter-spacing: -.03em !important; line-height: 1.15 !important; }
+  .hero h1::after { margin-top: 14px !important; }
+  .hero p { font-size: .92rem; margin: 14px auto 22px !important; }
+
+  .search-cta { display: none; }
+  .search-trigger .search-bar { padding: .75rem 1rem; }
+  .search-placeholder { padding: 0 !important; font-size: .88rem; }
+
+  .decouverte-header { align-items: flex-start; gap: .6rem; }
+  .decouverte-header h2 { font-size: 1.15rem; line-height: 1.25; }
+  .decouverte-header .btn { flex-shrink: 0; padding: .45rem .8rem !important; font-size: .78rem !important; }
+}
