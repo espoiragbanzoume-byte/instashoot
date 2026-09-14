@@ -66,6 +66,7 @@ class Publication(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     utilisateur_id = db.Column(db.Integer, db.ForeignKey("utilisateur.id"), nullable=False)
     image_url = db.Column(db.String(255), nullable=False)
+    video_url = db.Column(db.String(255), nullable=True)
     legende = db.Column(db.String(255))
     photographe_credite_id = db.Column(db.Integer, db.ForeignKey("utilisateur.id"))
     album_id = db.Column(db.Integer, db.ForeignKey("album.id"), nullable=True)
@@ -83,6 +84,8 @@ class Publication(db.Model):
         return Commentaire.query.filter_by(publication_id=self.id).count()
     def nb_reposts(self):
         return Repost.query.filter_by(publication_id=self.id).count()
+    def est_reel(self):
+        return bool(self.video_url)
     def est_aimee_par(self, user_id):
         return bool(user_id and PublicationLike.query.filter_by(publication_id=self.id, utilisateur_id=user_id).first())
     def est_enregistree_par(self, user_id):
@@ -106,11 +109,31 @@ class Commentaire(db.Model):
     utilisateur = db.relationship("Utilisateur")
 
 
+class Tableau(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    utilisateur_id = db.Column(db.Integer, db.ForeignKey("utilisateur.id"), nullable=False)
+    nom = db.Column(db.String(120), nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    utilisateur = db.relationship("Utilisateur", foreign_keys=[utilisateur_id])
+
+    def items(self):
+        return Enregistrement.query.filter_by(tableau_id=self.id).order_by(Enregistrement.created_at.desc()).all()
+
+    def nb_photos(self):
+        return Enregistrement.query.filter_by(tableau_id=self.id).count()
+
+    def photo_couverture(self):
+        item = Enregistrement.query.filter_by(tableau_id=self.id).order_by(Enregistrement.created_at.desc()).first()
+        return item.publication.image_url if item else None
+
+
 class Enregistrement(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     publication_id = db.Column(db.Integer, db.ForeignKey("publication.id"), nullable=False)
     utilisateur_id = db.Column(db.Integer, db.ForeignKey("utilisateur.id"), nullable=False)
+    tableau_id = db.Column(db.Integer, db.ForeignKey("tableau.id"), nullable=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    tableau = db.relationship("Tableau", foreign_keys=[tableau_id])
     __table_args__ = (db.UniqueConstraint("publication_id", "utilisateur_id", name="uq_save"),)
 
 
@@ -170,11 +193,20 @@ class ProfilPhotographe(db.Model):
     reseaux_sociaux = db.Column(db.String(255))
     disponibilite = db.Column(db.String(255), default="Disponible sur demande")
     visibilite_pro = db.Column(db.Boolean, default=True)
+    fait_photo = db.Column(db.Boolean, default=True)
+    fait_video = db.Column(db.Boolean, default=False)
 
     def liste_specialites(self):
         if not self.specialites:
             return []
         return [s.strip() for s in self.specialites.split(",") if s.strip()]
+
+    def metiers(self):
+        if self.fait_photo and self.fait_video:
+            return "Photographe & Vidéaste"
+        if self.fait_video:
+            return "Vidéaste"
+        return "Photographe"
 
 
 class Reservation(db.Model):

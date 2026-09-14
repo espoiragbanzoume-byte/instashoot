@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block title %}{{ tableau.nom }} — InstaShoot{% endblock %}
+{% set masquer_pied_de_page = true %}
+{% block content %}
+<section class="ig-settings-page">
+  <div class="ig-settings-head">
+    <a href="{{ url_for('mes_enregistrements') }}" class="settings-back" aria-label="Retour">‹</a>
+    <div><h1>{{ tableau.nom }}</h1><p>{{ items|length }} photo{{ 's' if items|length != 1 else '' }}</p></div>
+    <form method="post" action="{{ url_for('supprimer_tableau', tableau_id=tableau.id) }}" onsubmit="return confirm('Supprimer ce tableau ? Les photos resteront dans vos enregistrements.')">
+      <button type="submit" class="settings-inline-action" style="color:#b5502f">Supprimer</button>
+    </form>
+  </div>
+
+  {% if items %}
+    <div class="masonry-grid">
+      {% for item in items %}
+        <div class="masonry-item">
+          <a href="{{ url_for('voir_publication', publication_id=item.publication.id) }}"><img src="{{ item.publication.image_url }}" alt=""></a>
+          <div class="masonry-item-footer">
+            <a href="{{ url_for('profil_photographe', photographe_id=item.publication.auteur.id) }}" class="masonry-item-auteur">
+              {% if item.publication.auteur.avatar_url %}<img src="{{ item.publication.auteur.avatar_url }}" alt="">{% else %}<span>{{ item.publication.auteur.nom[:1]|upper }}</span>{% endif %}
+              {{ item.publication.auteur.nom }}
+            </a>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <section class="inspiration-empty">
+      <div class="inspiration-empty-icon">◫</div>
+      <h2>Ce tableau est vide</h2>
+      <p>Rangez des photos enregistrées ici depuis "Mes enregistrements".</p>
+    </section>
+  {% endif %}
+</section>
+{% endblock %}

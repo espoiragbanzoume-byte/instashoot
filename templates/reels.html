@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block title %}Reels — InstaShoot{% endblock %}
+{% set masquer_pied_de_page = true %}
+{% block content %}
+<section class="reels-page">
+  {% if publications %}
+    <div class="reels-grid">
+      {% for pub in publications %}
+        <a href="{{ url_for('voir_publication', publication_id=pub.id) }}" class="reel-card">
+          <video src="{{ pub.video_url }}" muted playsinline preload="metadata"></video>
+          <div class="reel-card-overlay">
+            <svg viewBox="0 0 24 24" fill="#fff" aria-hidden="true"><path d="M8 5v14l11-7Z"/></svg>
+            <span>{{ pub.nb_likes() }}</span>
+          </div>
+          <div class="reel-card-auteur">
+            {% if pub.auteur.avatar_url %}<img src="{{ pub.auteur.avatar_url }}" alt="">{% else %}<span>{{ pub.auteur.nom[:1]|upper }}</span>{% endif %}
+            <small>{{ pub.auteur.nom }}</small>
+          </div>
+        </a>
+      {% endfor %}
+    </div>
+  {% else %}
+    <section class="inspiration-empty">
+      <div class="inspiration-empty-icon">▶</div>
+      <h2>Pas encore de Reels</h2>
+      <p>Les vidéos publiées par les photographes et vidéastes apparaîtront ici.</p>
+    </section>
+  {% endif %}
+</section>
+{% endblock %}

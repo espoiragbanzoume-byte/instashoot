@@ -10,7 +10,7 @@ from email.utils import formataddr
 from werkzeug.utils import secure_filename
 from flask import Flask, render_template, request, redirect, url_for, session, flash, jsonify
 from datetime import date, datetime, timedelta
-from models import db, Utilisateur, ProfilPhotographe, Album, PortfolioPhoto, Reservation, Avis, Publication, Abonnement, Message, PublicationLike, Commentaire, Enregistrement, Repost, Notification, DemandeReinitialisationMotDePasse, Story
+from models import db, Utilisateur, ProfilPhotographe, Album, PortfolioPhoto, Reservation, Avis, Publication, Abonnement, Message, PublicationLike, Commentaire, Enregistrement, Repost, Notification, DemandeReinitialisationMotDePasse, Story, Tableau
 
 app = Flask(__name__)
 app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get("DATABASE_URL", "sqlite:///photoconnect.db")
@@ -140,7 +140,7 @@ def creer_notification(destinataire_id, type_, titre, contenu="", lien=None):
     db.session.add(Notification(destinataire_id=destinataire_id, type=type_, titre=titre, contenu=contenu, lien=lien))
 
 
-def rechercher_photographes(mot_cle="", ville="", type_prestation=""):
+def rechercher_photographes(mot_cle="", ville="", type_prestation="", metier=""):
     query = Utilisateur.query.join(ProfilPhotographe).filter(Utilisateur.role == "photographe")
 
     if mot_cle:
@@ -157,6 +157,10 @@ def rechercher_photographes(mot_cle="", ville="", type_prestation=""):
         query = query.filter(Utilisateur.ville.ilike(f"%{ville}%"))
     if type_prestation:
         query = query.filter(ProfilPhotographe.specialites.ilike(f"%{type_prestation}%"))
+    if metier == "photo":
+        query = query.filter(ProfilPhotographe.fait_photo.is_(True))
+    elif metier == "video":
+        query = query.filter(ProfilPhotographe.fait_video.is_(True))
 
     return query.all()
 
@@ -192,8 +196,9 @@ def photographes():
     mot_cle = request.args.get("q", "").strip()
     ville = request.args.get("ville", "").strip()
     type_prestation = request.args.get("type", "").strip()
-    resultats = rechercher_photographes(mot_cle, ville, type_prestation)
-    return render_template("photographes.html", mot_cle=mot_cle, ville=ville, type_prestation=type_prestation, resultats=resultats)
+    metier = request.args.get("metier", "").strip()
+    resultats = rechercher_photographes(mot_cle, ville, type_prestation, metier)
+    return render_template("photographes.html", mot_cle=mot_cle, ville=ville, type_prestation=type_prestation, metier=metier, resultats=resultats)
 
 
 @app.route("/comment-ca-marche")
@@ -963,6 +968,89 @@ def gerer_collaboration(album_id):
         album.politique_telechargement=request.form["politique_telechargement"]
     db.session.commit(); return redirect(request.referrer or url_for("voir_album", album_id=album.id))
 
+@app.route("/reels")
+def reels():
+    reels_publications = (
+        Publication.query
+        .join(Utilisateur, Publication.utilisateur_id == Utilisateur.id)
+        .filter(Publication.video_url.isnot(None))
+        .order_by(Publication.created_at.desc())
+        .all()
+    )
+    return render_template("reels.html", publications=reels_publications)
+
+
+@app.route("/mes-enregistrements")
+def mes_enregistrements():
+    if "utilisateur_id" not in session:
+        return redirect(url_for("connexion", next=url_for("mes_enregistrements")))
+    uid = session["utilisateur_id"]
+    tableaux = Tableau.query.filter_by(utilisateur_id=uid).order_by(Tableau.created_at.desc()).all()
+    non_classes = (
+        Enregistrement.query
+        .filter_by(utilisateur_id=uid, tableau_id=None)
+        .order_by(Enregistrement.created_at.desc())
+        .all()
+    )
+    return render_template("mes_enregistrements.html", tableaux=tableaux, non_classes=non_classes)
+
+
+@app.route("/tableau/creer", methods=["POST"])
+def creer_tableau():
+    if "utilisateur_id" not in session:
+        return redirect(url_for("connexion"))
+    nom = request.form.get("nom", "").strip() or "Nouveau tableau"
+    tableau = Tableau(utilisateur_id=session["utilisateur_id"], nom=nom)
+    db.session.add(tableau)
+    db.session.commit()
+    enregistrement_id = request.form.get("enregistrement_id", type=int)
+    if enregistrement_id:
+        item = Enregistrement.query.get(enregistrement_id)
+        if item and item.utilisateur_id == session["utilisateur_id"]:
+            item.tableau_id = tableau.id
+            db.session.commit()
+    flash(f"Tableau « {nom} » créé.", "success")
+    return redirect(url_for("voir_tableau", tableau_id=tableau.id))
+
+
+@app.route("/tableau/<int:tableau_id>")
+def voir_tableau(tableau_id):
+    tableau = Tableau.query.get_or_404(tableau_id)
+    if "utilisateur_id" not in session or tableau.utilisateur_id != session["utilisateur_id"]:
+        flash("Ce tableau ne vous appartient pas.", "error")
+        return redirect(url_for("mes_enregistrements"))
+    return render_template("tableau.html", tableau=tableau, items=tableau.items())
+
+
+@app.route("/tableau/<int:tableau_id>/supprimer", methods=["POST"])
+def supprimer_tableau(tableau_id):
+    tableau = Tableau.query.get_or_404(tableau_id)
+    if "utilisateur_id" not in session or tableau.utilisateur_id != session["utilisateur_id"]:
+        flash("Ce tableau ne vous appartient pas.", "error")
+        return redirect(url_for("mes_enregistrements"))
+    Enregistrement.query.filter_by(tableau_id=tableau.id).update({"tableau_id": None})
+    db.session.delete(tableau)
+    db.session.commit()
+    flash("Tableau supprimé (les photos restent dans vos enregistrements).", "success")
+    return redirect(url_for("mes_enregistrements"))
+
+
+@app.route("/enregistrement/<int:enregistrement_id>/deplacer", methods=["POST"])
+def deplacer_enregistrement(enregistrement_id):
+    item = Enregistrement.query.get_or_404(enregistrement_id)
+    if "utilisateur_id" not in session or item.utilisateur_id != session["utilisateur_id"]:
+        return redirect(url_for("mes_enregistrements"))
+    tableau_id = request.form.get("tableau_id", type=int)
+    if tableau_id:
+        tableau = Tableau.query.get(tableau_id)
+        if tableau and tableau.utilisateur_id == session["utilisateur_id"]:
+            item.tableau_id = tableau.id
+    else:
+        item.tableau_id = None
+    db.session.commit()
+    return redirect(request.referrer or url_for("mes_enregistrements"))
+
+
 @app.route("/inspiration")
 def inspiration():
     # Inspiration est un feed de PUBLICATIONS, jamais une liste de PortfolioPhoto.
@@ -1116,6 +1204,7 @@ def inscription_ajax():
     db.session.flush()
 
     if role == "photographe":
+        metiers = request.form.getlist("metiers")
         profil = ProfilPhotographe(
             id=u.id,
             specialites=request.form.get("specialites", "").strip(),
@@ -1123,6 +1212,8 @@ def inscription_ajax():
             annees_experience=request.form.get("annees_experience", 0, type=int),
             tarif_min=request.form.get("tarif_min", 0, type=int),
             reseaux_sociaux=request.form.get("reseaux_sociaux", "").strip(),
+            fait_photo=("photo" in metiers) or not metiers,
+            fait_video=("video" in metiers),
         )
         db.session.add(profil)
 
@@ -1154,6 +1245,7 @@ def inscription():
         db.session.flush()
 
         if role == "photographe":
+            metiers = request.form.getlist("metiers")
             profil = ProfilPhotographe(
                 id=u.id,
                 specialites=request.form.get("specialites", "").strip(),
@@ -1161,6 +1253,8 @@ def inscription():
                 annees_experience=request.form.get("annees_experience", 0, type=int),
                 tarif_min=request.form.get("tarif_min", 0, type=int),
                 reseaux_sociaux=request.form.get("reseaux_sociaux", "").strip(),
+                fait_photo=("photo" in metiers) or not metiers,
+                fait_video=("video" in metiers),
             )
             db.session.add(profil)
 
@@ -1491,20 +1585,25 @@ def migrer_sqlite():
             for c,t in additions.items():
                 if c not in cols: conn.execute(text(f"ALTER TABLE utilisateur ADD COLUMN {c} {t}"))
         if "profil_photographe" in tables:
-            cols={c["name"] for c in insp.get_columns("profil_photographe")}
-            for c,t in {"disponibilite":"VARCHAR(255) DEFAULT 'Disponible sur demande'","visibilite_pro":"BOOLEAN DEFAULT 1"}.items():
+            cols = {c["name"] for c in insp.get_columns("profil_photographe")}
+            additions = {"disponibilite":"VARCHAR(255) DEFAULT 'Disponible sur demande'","visibilite_pro":"BOOLEAN DEFAULT 1","fait_photo":"BOOLEAN DEFAULT 1","fait_video":"BOOLEAN DEFAULT 0"}
+            for c,t in additions.items():
                 if c not in cols: conn.execute(text(f"ALTER TABLE profil_photographe ADD COLUMN {c} {t}"))
         if "reservation" in tables:
-            cols={c["name"] for c in insp.get_columns("reservation")}
+            cols = {c["name"] for c in insp.get_columns("reservation")}
             if "devis" not in cols: conn.execute(text("ALTER TABLE reservation ADD COLUMN devis INTEGER"))
         if "album" in tables:
-            cols={c["name"] for c in insp.get_columns("album")}
+            cols = {c["name"] for c in insp.get_columns("album")}
             additions={"client_id":"INTEGER","reservation_id":"INTEGER","politique_telechargement":"VARCHAR(20) DEFAULT 'client'","collaboration_acceptee":"BOOLEAN DEFAULT 0","publication_visible":"BOOLEAN DEFAULT 1"}
             for c,t in additions.items():
                 if c not in cols: conn.execute(text(f"ALTER TABLE album ADD COLUMN {c} {t}"))
         if "publication" in tables:
-            cols={c["name"] for c in insp.get_columns("publication")}
+            cols = {c["name"] for c in insp.get_columns("publication")}
             if "album_id" not in cols: conn.execute(text("ALTER TABLE publication ADD COLUMN album_id INTEGER"))
+            if "video_url" not in cols: conn.execute(text("ALTER TABLE publication ADD COLUMN video_url VARCHAR(255)"))
+        if "enregistrement" in tables:
+            cols = {c["name"] for c in insp.get_columns("enregistrement")}
+            if "tableau_id" not in cols: conn.execute(text("ALTER TABLE enregistrement ADD COLUMN tableau_id INTEGER"))
 
 with app.app_context():
     db.create_all()

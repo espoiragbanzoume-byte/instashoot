@@ -51,6 +51,14 @@
       {% if role == 'photographe' %}
       <div class="signup-pro-fields signup-pro-fields-page">
         <div class="form-section-label pro-section-label">Votre activité professionnelle</div>
+        <div class="pc-specialties-field">
+          <span class="pc-field-label">Votre métier</span>
+          <div class="metiers-picker">
+            <label class="metier-option"><input type="checkbox" name="metiers" value="photo" checked><span>📷 Photographe</span></label>
+            <label class="metier-option"><input type="checkbox" name="metiers" value="video"><span>🎥 Vidéaste</span></label>
+          </div>
+          <small class="pc-specialties-hint">Cochez une ou les deux — vous pouvez proposer les deux prestations.</small>
+        </div>
         <div class="pc-specialties-field" data-specialties-picker>
           <span class="pc-field-label">Spécialités</span>
           <div class="pc-specialties-picker">

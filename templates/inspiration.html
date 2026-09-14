@@ -15,7 +15,7 @@
   <div class="ig-stories-row">
     {% if utilisateur_courant %}
       <form method="post" action="{{ url_for('publier_story') }}" enctype="multipart/form-data" id="story-upload-form" style="display:contents">
-        <input type="file" name="image" accept="image/*" id="story-upload-input" onchange="document.getElementById('story-upload-form').submit()" hidden>
+        <input type="file" name="image" accept="image/*" id="story-upload-input" onchange="document.getElementById('story-upload-form').submit()" class="sr-only-file">
         <button type="button" class="ig-story" onclick="document.getElementById('story-upload-input').click()" style="border:0;background:none;">
           <span class="ig-story-ring is-self">
             {% if utilisateur_courant.avatar_url %}<img src="{{ utilisateur_courant.avatar_url }}" alt="">{% else %}<span class="ig-story-fallback">{{ utilisateur_courant.nom[:1]|upper }}</span>{% endif %}

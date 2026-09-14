@@ -13,8 +13,13 @@
         <button type="submit" class="btn btn-primary">Rechercher</button>
         <button type="button" class="btn btn-outline" onclick="document.getElementById('filtres-photographes').classList.toggle('ouvert')">Filtres</button>
       </div>
-      <div id="filtres-photographes" class="filtres-panel {{ 'ouvert' if ville or type_prestation else '' }}">
+      <div id="filtres-photographes" class="filtres-panel {{ 'ouvert' if ville or type_prestation or metier else '' }}">
         <select name="ville" class="modern-native-select"><option value="">Toutes les villes</option>{% for option in villes_disponibles %}<option value="{{ option }}" {{ 'selected' if ville == option else '' }}>{{ option }}</option>{% endfor %}</select>
+        <select name="metier" class="modern-native-select">
+          <option value="">Photographes & vidéastes</option>
+          <option value="photo" {{ 'selected' if metier == 'photo' else '' }}>Photographes</option>
+          <option value="video" {{ 'selected' if metier == 'video' else '' }}>Vidéastes</option>
+        </select>
         <select name="type" class="modern-native-select">
           <option value="">Type de prestation</option>
           {% for option in ['Mariage', 'Portrait', 'Événementiel', 'Mode', 'Grossesse', 'Produits'] %}
@@ -35,6 +40,7 @@
             {% endif %}
             <div class="result-info">
               <h3>{{ p.nom }}</h3>
+              <span class="metier-tag metier-tag-sm">{{ p.profil_photographe.metiers() }}</span>
               <p class="result-meta">📍 {{ p.ville }}</p>
               <p class="result-note">⭐ {{ p.profil_photographe.note_moyenne }}/5</p>
               <div class="result-tags">

@@ -173,6 +173,14 @@
 </button></div></label>
         <div id="modal-champs-photographe" class="signup-pro-fields" style="display:none;">
           <div class="form-section-label pro-section-label">Votre activité professionnelle</div>
+          <div class="pc-specialties-field">
+            <span class="pc-field-label">Votre métier</span>
+            <div class="metiers-picker">
+              <label class="metier-option"><input type="checkbox" name="metiers" value="photo" checked><span>📷 Photographe</span></label>
+              <label class="metier-option"><input type="checkbox" name="metiers" value="video"><span>🎥 Vidéaste</span></label>
+            </div>
+            <small class="pc-specialties-hint">Cochez une ou les deux — vous pouvez proposer les deux prestations.</small>
+          </div>
           <div class="pc-specialties-field" data-specialties-picker>
             <span class="pc-field-label">Spécialités</span>
             <div class="pc-specialties-picker">
@@ -276,6 +284,9 @@
     <a href="{{ url_for('inspiration') }}" class="mobile-ig-tab {{ 'is-active' if request.endpoint == 'inspiration' else '' }}" aria-label="Accueil">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h5v-6h4v6h5V10"/></svg>
     </a>
+    <a href="{{ url_for('reels') }}" class="mobile-ig-tab {{ 'is-active' if request.endpoint == 'reels' else '' }}" aria-label="Reels">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="18" rx="3"/><path d="M7 3v18M17 3v18M2 8h5M2 16h5M17 8h5M17 16h5"/></svg>
+    </a>
     <a href="{{ url_for('photographes') }}" class="mobile-ig-tab {{ 'is-active' if request.endpoint == 'photographes' else '' }}" aria-label="Rechercher">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
     </a>
@@ -284,18 +295,14 @@
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="3" width="18" height="18" rx="5"/><path d="M12 8v8M8 12h8"/></svg>
       </a>
     {% elif utilisateur_courant %}
-      <a href="{{ url_for('photographes') }}" class="mobile-ig-tab mobile-ig-tab-create" aria-label="Demander un devis">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="3" width="18" height="18" rx="5"/><path d="M12 8v8M8 12h8"/></svg>
+      <a href="{{ url_for('mes_enregistrements') }}" class="mobile-ig-tab {{ 'is-active' if request.endpoint in ['mes_enregistrements', 'voir_tableau'] else '' }}" aria-label="Mes enregistrements">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h12a1 1 0 0 1 1 1v17l-7-4-7 4V4a1 1 0 0 1 1-1Z"/></svg>
       </a>
     {% else %}
-      <button type="button" class="mobile-ig-tab mobile-ig-tab-create" onclick="ouvrirModalInscription()" aria-label="Créer un compte">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="3" width="18" height="18" rx="5"/><path d="M12 8v8M8 12h8"/></svg>
+      <button type="button" class="mobile-ig-tab" onclick="ouvrirModalInscription()" aria-label="Créer un compte">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h12a1 1 0 0 1 1 1v17l-7-4-7 4V4a1 1 0 0 1 1-1Z"/></svg>
       </button>
     {% endif %}
-    <a href="{{ url_for('notifications') if utilisateur_courant else '#' }}" class="mobile-ig-tab mobile-ig-tab-badge-wrap {{ 'is-active' if request.endpoint == 'notifications' else '' }}" aria-label="Notifications" {% if not utilisateur_courant %}onclick="ouvrirModalConnexion(); return false;"{% endif %}>
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8Z"/></svg>
-      {% if notifications_non_lues %}<span class="mobile-ig-badge mobile-ig-badge-tab">{{ notifications_non_lues }}</span>{% endif %}
-    </a>
     {% if utilisateur_courant %}
       <a href="{{ url_for('mon_profil') }}" class="mobile-ig-tab mobile-ig-tab-avatar {{ 'is-active' if request.endpoint == 'mon_profil' else '' }}" aria-label="Mon profil">
         {% if utilisateur_courant.avatar_url %}<img src="{{ utilisateur_courant.avatar_url }}" alt="">{% else %}<span>{{ utilisateur_courant.nom[:1]|upper }}</span>{% endif %}

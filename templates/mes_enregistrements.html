@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% block title %}Mes enregistrements — InstaShoot{% endblock %}
+{% set masquer_pied_de_page = true %}
+{% block content %}
+<section class="ig-settings-page">
+  <div class="ig-settings-head">
+    <a href="{{ url_for('mon_profil') }}" class="settings-back" aria-label="Retour">‹</a>
+    <div><h1>Mes enregistrements</h1><p>Vos tableaux d'inspiration, comme un moodboard à montrer à un photographe.</p></div>
+  </div>
+
+  <form method="post" action="{{ url_for('creer_tableau') }}" class="tableau-creation-form">
+    <input type="text" name="nom" placeholder="Nom du nouveau tableau (ex: Mariage champêtre)" required maxlength="120">
+    <button type="submit" class="btn btn-primary">Créer</button>
+  </form>
+
+  {% if tableaux %}
+    <div class="tableaux-grid">
+      {% for t in tableaux %}
+        <a href="{{ url_for('voir_tableau', tableau_id=t.id) }}" class="tableau-card">
+          <span class="tableau-card-cover">
+            {% if t.photo_couverture() %}<img src="{{ t.photo_couverture() }}" alt="">{% else %}<span class="tableau-card-empty">◫</span>{% endif %}
+          </span>
+          <strong>{{ t.nom }}</strong>
+          <small>{{ t.nb_photos() }} photo{{ 's' if t.nb_photos() != 1 else '' }}</small>
+        </a>
+      {% endfor %}
+    </div>
+  {% endif %}
+
+  {% if non_classes %}
+    <h2 class="tableaux-section-title">Non classés</h2>
+    <div class="ig-grid">
+      {% for item in non_classes %}
+        <div class="ig-grid-item">
+          <a href="{{ url_for('voir_publication', publication_id=item.publication.id) }}"><img src="{{ item.publication.image_url }}" alt=""></a>
+          <form method="post" action="{{ url_for('deplacer_enregistrement', enregistrement_id=item.id) }}" class="tableau-move-form">
+            <select name="tableau_id" onchange="this.form.submit()">
+              <option value="">Ranger dans un tableau…</option>
+              {% for t in tableaux %}<option value="{{ t.id }}">{{ t.nom }}</option>{% endfor %}
+            </select>
+          </form>
+        </div>
+      {% endfor %}
+    </div>
+  {% endif %}
+
+  {% if not tableaux and not non_classes %}
+    <section class="inspiration-empty">
+      <div class="inspiration-empty-icon">◫</div>
+      <h2>Rien d'enregistré pour l'instant</h2>
+      <p>Enregistrez des photos depuis le fil pour les retrouver ici et les organiser en tableaux.</p>
+    </section>
+  {% endif %}
+</section>
+{% endblock %}
