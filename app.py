@@ -17,7 +17,7 @@ app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get("DATABASE_URL", "sqlite:/
 app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY", "cle-de-developpement-a-changer-plus-tard")
 app.config["ADMIN_SETUP_KEY"] = os.environ.get("ADMIN_SETUP_KEY", "")
 app.config["UPLOAD_FOLDER"] = os.path.join(app.static_folder, "uploads")
-app.config["MAX_CONTENT_LENGTH"] = 40 * 1024 * 1024  # 40 Mo par requête (plusieurs photos à la fois)
+app.config["MAX_CONTENT_LENGTH"] = 80 * 1024 * 1024  # 80 Mo par requête (albums multi-photos ou un Reel vidéo court)
 
 # Configuration Gmail pour la récupération du mot de passe.
 # Les valeurs doivent être fournies par variables d'environnement, jamais dans GitHub.
@@ -51,10 +51,15 @@ def donnees_formulaires():
     return {"villes_disponibles": villes, "prestations_disponibles": PRESTATIONS}
 
 EXTENSIONS_AUTORISEES = {"png", "jpg", "jpeg", "webp"}
+EXTENSIONS_VIDEO_AUTORISEES = {"mp4", "mov", "webm"}
 
 
 def extension_autorisee(nom_fichier):
     return "." in nom_fichier and nom_fichier.rsplit(".", 1)[1].lower() in EXTENSIONS_AUTORISEES
+
+
+def extension_video_autorisee(nom_fichier):
+    return "." in nom_fichier and nom_fichier.rsplit(".", 1)[1].lower() in EXTENSIONS_VIDEO_AUTORISEES
 
 
 def enregistrer_image(fichier):
@@ -62,6 +67,20 @@ def enregistrer_image(fichier):
     if not fichier or fichier.filename == "":
         return None
     if not extension_autorisee(fichier.filename):
+        return None
+
+    extension = fichier.filename.rsplit(".", 1)[1].lower()
+    nom_unique = f"{uuid.uuid4().hex}.{extension}"
+    chemin = os.path.join(app.config["UPLOAD_FOLDER"], nom_unique)
+    fichier.save(chemin)
+    return url_for("static", filename=f"uploads/{nom_unique}")
+
+
+def enregistrer_video(fichier):
+    """Sauvegarde un fichier vidéo uploadé avec un nom unique, retourne son URL publique (ou None)."""
+    if not fichier or fichier.filename == "":
+        return None
+    if not extension_video_autorisee(fichier.filename):
         return None
 
     extension = fichier.filename.rsplit(".", 1)[1].lower()
@@ -92,7 +111,7 @@ def seeder_donnees_demo():
     demo = [
         {
             "nom": "Aristide K.", "email": "aristide@example.com", "ville": "Cotonou",
-            "presentation": "Photographe passionné basé à Cotonou, spécialisé dans les mariages et l'événementiel depuis 5 ans.",
+            "presentation": "Prestataire passionné basé à Cotonou, spécialisé dans les mariages et l'événementiel depuis 5 ans.",
             "specialites": "Mariage, Portrait, Événementiel", "annees_experience": 5, "tarif_min": 50000,
         },
         {
@@ -191,7 +210,7 @@ def accueil():
         photographes_a_decouvrir=photographes_a_decouvrir, publications=publications)
 
 
-@app.route("/photographes", methods=["GET"])
+@app.route("/prestataires", methods=["GET"])
 def photographes():
     mot_cle = request.args.get("q", "").strip()
     ville = request.args.get("ville", "").strip()
@@ -213,7 +232,7 @@ def formations():
     if utilisateur is None:
         return redirect(url_for("connexion", next=url_for("formations")))
     if utilisateur.role != "photographe":
-        flash("Cette page est réservée aux photographes.", "error")
+        flash("Cette page est réservée aux prestataires.", "error")
         return redirect(url_for("accueil"))
     return render_template("formations.html")
 
@@ -233,11 +252,11 @@ def contact():
     return render_template("contact.html")
 
 
-@app.route("/photographe/<int:photographe_id>/devis", methods=["GET", "POST"])
+@app.route("/prestataire/<int:photographe_id>/devis", methods=["GET", "POST"])
 def demander_devis(photographe_id):
     photographe = Utilisateur.query.filter_by(id=photographe_id, role="photographe").first()
     if photographe is None:
-        return "Photographe introuvable", 404
+        return "Prestataire introuvable", 404
 
     if "utilisateur_id" not in session:
         return redirect(url_for("connexion", next=url_for("demander_devis", photographe_id=photographe_id)))
@@ -263,16 +282,16 @@ def demander_devis(photographe_id):
         creer_notification(photographe.id, "demande", "Nouvelle demande de prestation",
             f"{client.nom} souhaite travailler avec vous.", url_for("mes_demandes"))
         db.session.commit()
-        return render_template("devis.html", photographe=photographe, message="Ta demande a bien été envoyée au photographe.", current_date=date.today().isoformat(), max_date=date(date.today().year + 2, 12, 31).isoformat())
+        return render_template("devis.html", photographe=photographe, message="Ta demande a bien été envoyée au prestataire.", current_date=date.today().isoformat(), max_date=date(date.today().year + 2, 12, 31).isoformat())
 
     return render_template("devis.html", photographe=photographe, current_date=date.today().isoformat(), max_date=date(date.today().year + 2, 12, 31).isoformat())
 
 
-@app.route("/photographe/<int:photographe_id>/avis", methods=["POST"])
+@app.route("/prestataire/<int:photographe_id>/avis", methods=["POST"])
 def laisser_avis(photographe_id):
     photographe = Utilisateur.query.filter_by(id=photographe_id, role="photographe").first()
     if photographe is None:
-        return "Photographe introuvable", 404
+        return "Prestataire introuvable", 404
 
     if "utilisateur_id" not in session:
         return redirect(url_for("connexion", next=url_for("profil_photographe", photographe_id=photographe_id)))
@@ -316,11 +335,11 @@ def laisser_avis(photographe_id):
     return redirect(url_for("profil_photographe", photographe_id=photographe_id))
 
 
-@app.route("/photographe/<int:photographe_id>")
+@app.route("/prestataire/<int:photographe_id>")
 def profil_photographe(photographe_id):
     photographe = Utilisateur.query.filter_by(id=photographe_id, role="photographe").first()
     if photographe is None:
-        return "Photographe introuvable", 404
+        return "Prestataire introuvable", 404
     avis_liste = Avis.query.filter_by(photographe_id=photographe_id).order_by(Avis.created_at.desc()).all()
     albums = Album.query.filter_by(photographe_id=photographe.id, publication_visible=True).order_by(Album.created_at.desc()).all()
 
@@ -450,6 +469,43 @@ def creer_album():
         db.session.commit()
 
     return redirect(url_for("mon_profil"))
+
+
+@app.route("/mon-profil/publier-reel", methods=["POST"])
+def publier_reel():
+    if "utilisateur_id" not in session:
+        return redirect(url_for("connexion"))
+
+    utilisateur = Utilisateur.query.get(session["utilisateur_id"])
+    if utilisateur is None or utilisateur.role != "photographe":
+        session.pop("utilisateur_id", None)
+        return redirect(url_for("connexion"))
+
+    if not (utilisateur.profil_photographe and utilisateur.profil_photographe.fait_video):
+        flash("Seuls les comptes proposant la vidéo peuvent publier un Reel.", "error")
+        return redirect(url_for("mon_profil"))
+
+    legende = request.form.get("legende", "").strip()
+    fichier_video = request.files.get("video")
+    fichier_vignette = request.files.get("vignette")
+
+    if not fichier_video or fichier_video.filename == "":
+        flash("Choisissez un fichier vidéo à publier.", "error")
+        return redirect(url_for("mon_profil"))
+
+    url_video = enregistrer_video(fichier_video)
+    if not url_video:
+        flash("Format vidéo non pris en charge (MP4, MOV, WEBM).", "error")
+        return redirect(url_for("mon_profil"))
+
+    url_vignette = enregistrer_image(fichier_vignette) if fichier_vignette else None
+    if not url_vignette:
+        url_vignette = utilisateur.avatar_url or url_for("static", filename="favicon.svg")
+
+    db.session.add(Publication(utilisateur_id=utilisateur.id, image_url=url_vignette, video_url=url_video, legende=legende))
+    db.session.commit()
+    flash("Votre Reel a été publié.", "success")
+    return redirect(url_for("reels"))
 
 
 @app.route("/album/<int:album_id>")
@@ -618,7 +674,7 @@ def admin_dashboard():
     return render_template("admin.html", stats=stats, photographes=photographes, eligibilites=eligibilites)
 
 
-@app.route("/admin/photographe/<int:photographe_id>/certifier", methods=["POST"])
+@app.route("/admin/prestataire/<int:photographe_id>/certifier", methods=["POST"])
 def certifier_photographe(photographe_id):
     admin = admin_requis()
     if not admin:
@@ -712,7 +768,7 @@ def rechercher_utilisateurs_api():
             "id": u.id,
             "nom": u.nom,
             "role": u.role,
-            "role_label": "Photographe" if u.role == "photographe" else "Client",
+            "role_label": (u.profil_photographe.metiers() if u.profil_photographe else "Prestataire") if u.role == "photographe" else "Client",
             "ville": u.ville or "",
             "avatar_url": u.avatar_url or "",
             "url": url_for("profil_photographe", photographe_id=u.id)
@@ -743,7 +799,7 @@ def publier_photo_client():
     return redirect(url_for("mon_profil"))
 
 
-@app.route("/mon-profil/publier-photographe", methods=["POST"])
+@app.route("/mon-profil/publier-prestataire", methods=["POST"])
 def publier_photo_photographe():
     if "utilisateur_id" not in session:
         return redirect(url_for("connexion"))
@@ -1179,7 +1235,7 @@ def lire_toutes_notifications():
     return redirect(url_for("notifications"))
 
 
-@app.route("/devenir-photographe")
+@app.route("/devenir-prestataire")
 def devenir_photographe():
     return render_template("devenir_photographe.html")
 

@@ -17,7 +17,7 @@
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
       </a>
     {% elif utilisateur_courant %}
-      <a href="{{ url_for('photographes') }}" class="mobile-ig-header-icon" aria-label="Trouver un photographe">
+      <a href="{{ url_for('photographes') }}" class="mobile-ig-header-icon" aria-label="Trouver un prestataire">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
       </a>
     {% else %}
@@ -54,10 +54,10 @@
           <details class="nav-dropdown">
             <summary>Découvrir</summary>
             <div class="nav-menu">
-              <a href="{{ url_for('photographes') }}"><span class="menu-icon">✦</span><span><strong>Photographes</strong><small>Trouver un prestataire</small></span></a>
+              <a href="{{ url_for('photographes') }}"><span class="menu-icon">✦</span><span><strong>Prestataires</strong><small>Trouver un prestataire</small></span></a>
               <a href="{{ url_for('inspiration') }}"><span class="menu-icon">◈</span><span><strong>Inspiration</strong><small>Explorer les créations</small></span></a>
               <a href="{{ url_for('comment_ca_marche') }}"><span class="menu-icon">?</span><span><strong>Comment ça marche</strong><small>Découvrir InstaShoot</small></span></a>
-              {% if utilisateur_courant.role == 'photographe' %}<a href="{{ url_for('formations') }}"><span class="menu-icon">✦</span><span><strong>Formations</strong><small>Progresser comme photographe</small></span></a>{% endif %}
+              {% if utilisateur_courant.role == 'photographe' %}<a href="{{ url_for('formations') }}"><span class="menu-icon">✦</span><span><strong>Formations</strong><small>Progresser comme prestataire</small></span></a>{% endif %}
             </div>
           </details>
           {% if utilisateur_courant.role == 'photographe' %}
@@ -87,7 +87,7 @@
                 <span class="profile-trigger-name">{{ utilisateur_courant.nom.split(' ')[0] }}</span>
               </summary>
               <div class="profile-dropdown">
-                <div class="profile-dropdown-head"><strong>{{ utilisateur_courant.nom }}</strong><small>{{ 'Photographe' if utilisateur_courant.role == 'photographe' else 'Client' }}</small></div>
+                <div class="profile-dropdown-head"><strong>{{ utilisateur_courant.nom }}</strong><small>{{ (utilisateur_courant.profil_photographe.metiers() if utilisateur_courant.profil_photographe else 'Prestataire') if utilisateur_courant.role == 'photographe' else 'Client' }}</small></div>
                 <a href="{{ url_for('mon_profil') }}">Mon profil</a>
                 <a href="{{ url_for('parametres') }}">Paramètres</a>
                 <a href="{{ url_for('notifications') }}">Notifications{% if notifications_non_lues %}<b>{{ notifications_non_lues }}</b>{% endif %}</a>
@@ -99,10 +99,10 @@
             </details>
           </div>
         {% else %}
-          <a href="{{ url_for('photographes') }}" class="nav-link">Photographes</a>
+          <a href="{{ url_for('photographes') }}" class="nav-link">Prestataires</a>
           <a href="{{ url_for('inspiration') }}" class="nav-link">Inspiration</a>
           <a href="{{ url_for('comment_ca_marche') }}" class="nav-link">Comment ça marche</a>
-          <a href="{{ url_for('devenir_photographe') }}" class="nav-link">Devenir photographe</a>
+          <a href="{{ url_for('devenir_photographe') }}" class="nav-link">Devenir prestataire</a>
           <button type="button" class="btn btn-outline" onclick="ouvrirModalConnexion()">Connexion</button>
           <button type="button" class="btn btn-primary" onclick="ouvrirModalInscription()">Inscription</button>
         {% endif %}
@@ -147,7 +147,7 @@
 
       <div class="role-toggle">
         <button type="button" id="modal-role-client" class="role-btn active" onclick="choisirRoleModal('client')">Je suis client</button>
-        <button type="button" id="modal-role-photographe" class="role-btn" onclick="choisirRoleModal('photographe')">Je suis photographe</button>
+        <button type="button" id="modal-role-photographe" class="role-btn" onclick="choisirRoleModal('photographe')">Je suis prestataire</button>
       </div>
 
       <form id="modal-inscription-form" class="auth-form auth-modern-form" onsubmit="return soumettreInscriptionModal(event)">
@@ -176,8 +176,8 @@
           <div class="pc-specialties-field">
             <span class="pc-field-label">Votre métier</span>
             <div class="metiers-picker">
-              <label class="metier-option"><input type="checkbox" name="metiers" value="photo" checked><span>📷 Photographe</span></label>
-              <label class="metier-option"><input type="checkbox" name="metiers" value="video"><span>🎥 Vidéaste</span></label>
+              <label class="metier-option"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8h3l1.5-2h7L17 8h3a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1Z"/><circle cx="12" cy="13" r="3.5"/></svg><span>Photographe</span><input type="checkbox" name="metiers" value="photo" checked></label>
+              <label class="metier-option"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="6" width="14" height="12" rx="2"/><path d="m16 10 5.5-3.2a1 1 0 0 1 1.5.86v8.68a1 1 0 0 1-1.5.86L16 14"/></svg><span>Vidéaste</span><input type="checkbox" name="metiers" value="video"></label>
             </div>
             <small class="pc-specialties-hint">Cochez une ou les deux — vous pouvez proposer les deux prestations.</small>
           </div>
@@ -262,7 +262,7 @@
     <div class="footer-content">
       <div class="footer-col">
         <p class="footer-logo"><span class="footer-logo-mark">IS</span><span>InstaShoot</span></p>
-        <p>La marketplace des photographes au Bénin.</p>
+        <p>La marketplace des prestataires photo &amp; vidéo au Bénin.</p>
       </div>
       <div class="footer-col">
         <a href="{{ url_for('cgu') }}">Conditions d'utilisation</a>

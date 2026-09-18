@@ -45,7 +45,7 @@
           <button class="settings-row settings-row-button" type="button" onclick="ouvrirModalCompte('email')"><div><strong>Email</strong><small>{{ utilisateur.email }}</small></div><span>Modifier&nbsp; ›</span></button>
           <button class="settings-row settings-row-button" type="button" onclick="ouvrirModalCompte('telephone')"><div><strong>Téléphone</strong><small>{{ utilisateur.telephone or 'Aucun numéro ajouté' }}</small></div><span>Modifier&nbsp; ›</span></button>
           <button class="settings-row settings-row-button" type="button" onclick="ouvrirModalCompte('ville')"><div><strong>Ville</strong><small>{{ utilisateur.ville or 'Aucune ville ajoutée' }}</small></div><span>Modifier&nbsp; ›</span></button>
-          <div class="settings-row"><div><strong>Type de compte</strong><small>{{ 'Photographe' if utilisateur.role=='photographe' else 'Client' }}</small></div><span class="settings-value">{{ 'Professionnel' if utilisateur.role=='photographe' else 'Personnel' }}</span></div>
+          <div class="settings-row"><div><strong>Type de compte</strong><small>{{ (utilisateur.profil_photographe.metiers() if utilisateur.profil_photographe else 'Prestataire') if utilisateur.role=='photographe' else 'Client' }}</small></div><span class="settings-value">{{ 'Professionnel' if utilisateur.role=='photographe' else 'Personnel' }}</span></div>
         </div>
       </div>
 
@@ -107,7 +107,7 @@
       </div>
 
       {% elif section=='professionnel' and utilisateur.role=='photographe' %}
-      <div class="settings-section"><h2>Compte professionnel</h2><p class="settings-section-intro">Gérez votre présence de photographe sur InstaShoot.</p>
+      <div class="settings-section"><h2>Compte professionnel</h2><p class="settings-section-intro">Gérez votre présence de prestataire sur InstaShoot.</p>
         <form method="post" class="settings-card"><input type="hidden" name="section" value="professionnel">
           <label class="settings-control-row"><div><strong>Profil professionnel visible</strong><small>Apparaître dans les recherches et recommandations.</small></div><span class="switch"><input type="checkbox" name="visibilite_pro" {% if utilisateur.profil_photographe.visibilite_pro %}checked{% endif %}><i></i></span></label>
           <div class="settings-text-row"><div><strong>Disponibilité</strong><small>Ex. Lun–Sam, 9h–18h</small></div><input name="disponibilite" value="{{ utilisateur.profil_photographe.disponibilite or '' }}"></div>

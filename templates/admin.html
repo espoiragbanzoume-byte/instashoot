@@ -6,14 +6,14 @@
 
   <div class="admin-stats-grid">
     <div class="admin-stat-card"><strong>{{ stats.clients }}</strong><span>Clients</span></div>
-    <div class="admin-stat-card"><strong>{{ stats.photographes }}</strong><span>Photographes</span></div>
+    <div class="admin-stat-card"><strong>{{ stats.photographes }}</strong><span>Prestataires</span></div>
     <div class="admin-stat-card"><strong>{{ stats.reservations_en_cours }}</strong><span>Demandes en cours</span></div>
     <div class="admin-stat-card"><strong>{{ stats.reservations_terminees }}</strong><span>Prestations terminées</span></div>
   </div>
 
-  <h2 style="margin-top:2rem;">Photographes — certification</h2>
+  <h2 style="margin-top:2rem;">Prestataires — certification</h2>
   <p class="empty-state" style="text-align:left;padding:1rem 0;">
-    La certification est <strong>automatique</strong> : chaque photographe peut la demander lui-même depuis son profil,
+    La certification est <strong>automatique</strong> : chaque prestataire peut la demander lui-même depuis son profil,
     et le site vérifie seul des critères objectifs (photo de profil, présentation, spécialités, tarif, au moins 3 photos
     publiées, note moyenne correcte s'il a des avis). Tu n'as normalement rien à faire ici — les boutons ci-dessous
     servent seulement de <strong>correction manuelle exceptionnelle</strong> (ex: retirer un badge en cas d'abus).
@@ -46,7 +46,7 @@
         </form>
       </div>
     {% else %}
-      <p class="empty-state">Aucun photographe inscrit pour l'instant.</p>
+      <p class="empty-state">Aucun prestataire inscrit pour l'instant.</p>
     {% endfor %}
   </div>
 </section>

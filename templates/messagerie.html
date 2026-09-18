@@ -27,10 +27,10 @@
         {% for contact in contacts %}
         <a class="msg-contact {% if destinataire and destinataire.id == contact.id %}active{% endif %}" href="{{ url_for('messagerie', avec=contact.id) }}">
           {% if contact.avatar_url %}<img src="{{ contact.avatar_url }}" alt="{{ contact.nom }}">{% else %}<span class="msg-contact-avatar">{{ contact.nom[:1]|upper }}</span>{% endif %}
-          <span><strong>{{ contact.nom }}</strong><small>{{ 'Photographe' if contact.role == 'photographe' else 'Client' }}{% if contact.ville %} · {{ contact.ville }}{% endif %}</small></span>
+          <span><strong>{{ contact.nom }}</strong><small>{{ (contact.profil_photographe.metiers() if contact.profil_photographe else 'Prestataire') if contact.role == 'photographe' else 'Client' }}{% if contact.ville %} · {{ contact.ville }}{% endif %}</small></span>
         </a>
         {% else %}
-          <div class="msg-empty-list"><div class="msg-empty-icon">✦</div><strong>Aucune conversation</strong><p>Recherchez une personne ou contactez un photographe depuis son profil.</p></div>
+          <div class="msg-empty-list"><div class="msg-empty-icon">✦</div><strong>Aucune conversation</strong><p>Recherchez une personne ou contactez un prestataire depuis son profil.</p></div>
         {% endfor %}
       </div>
     </aside>
@@ -40,7 +40,7 @@
         <header class="msg-conversation-header">
           <a class="msg-mobile-back" href="{{ url_for('messagerie') }}" aria-label="Retour aux conversations">←</a>
           {% if destinataire.avatar_url %}<img src="{{ destinataire.avatar_url }}" alt="{{ destinataire.nom }}">{% else %}<span class="msg-contact-avatar">{{ destinataire.nom[:1]|upper }}</span>{% endif %}
-          <div><strong>{{ destinataire.nom }}</strong><small>{{ 'Photographe' if destinataire.role == 'photographe' else 'Client' }}{% if destinataire.ville %} · {{ destinataire.ville }}{% endif %}</small></div>
+          <div><strong>{{ destinataire.nom }}</strong><small>{{ (destinataire.profil_photographe.metiers() if destinataire.profil_photographe else 'Prestataire') if destinataire.role == 'photographe' else 'Client' }}{% if destinataire.ville %} · {{ destinataire.ville }}{% endif %}</small></div>
         </header>
         <div class="msg-messages" id="zone-messages">
           {% for m in conversation %}

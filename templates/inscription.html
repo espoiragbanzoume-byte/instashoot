@@ -19,7 +19,7 @@
         <span class="role-icon">◌</span><span><strong>Je suis client</strong><small>Découvrir et réserver</small></span>
       </a>
       <a href="{{ url_for('inscription', role='photographe') }}" class="role-btn {{ 'active' if role == 'photographe' else '' }}">
-        <span class="role-icon">✦</span><span><strong>Je suis photographe</strong><small>Présenter mon travail</small></span>
+        <span class="role-icon">✦</span><span><strong>Je suis prestataire</strong><small>Présenter mon travail</small></span>
       </a>
     </div>
 
@@ -54,8 +54,8 @@
         <div class="pc-specialties-field">
           <span class="pc-field-label">Votre métier</span>
           <div class="metiers-picker">
-            <label class="metier-option"><input type="checkbox" name="metiers" value="photo" checked><span>📷 Photographe</span></label>
-            <label class="metier-option"><input type="checkbox" name="metiers" value="video"><span>🎥 Vidéaste</span></label>
+            <label class="metier-option"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8h3l1.5-2h7L17 8h3a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1Z"/><circle cx="12" cy="13" r="3.5"/></svg><span>Photographe</span><input type="checkbox" name="metiers" value="photo" checked></label>
+            <label class="metier-option"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="6" width="14" height="12" rx="2"/><path d="m16 10 5.5-3.2a1 1 0 0 1 1.5.86v8.68a1 1 0 0 1-1.5.86L16 14"/></svg><span>Vidéaste</span><input type="checkbox" name="metiers" value="video"></label>
           </div>
           <small class="pc-specialties-hint">Cochez une ou les deux — vous pouvez proposer les deux prestations.</small>
         </div>

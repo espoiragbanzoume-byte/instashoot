@@ -51,7 +51,7 @@
       </div>
       {% else %}
       <div class="demande-actions client-request-actions">
-        <a href="{{ url_for('messagerie',avec=d.photographe.id) }}" class="btn btn-outline btn-sm">Discuter avec le photographe</a>
+        <a href="{{ url_for('messagerie',avec=d.photographe.id) }}" class="btn btn-outline btn-sm">Discuter avec le prestataire</a>
         {% if d.devis and d.statut=='discussion' %}<form method="post" action="{{ url_for('modifier_statut_demande',reservation_id=d.id) }}"><input type="hidden" name="statut" value="acceptee"><button class="btn btn-primary btn-sm" type="submit">Accepter le devis</button></form>{% endif %}
         {% if d.statut=='acceptee' and d.devis and not d.acompte_paye %}
           <form method="post" action="{{ url_for('payer_acompte',reservation_id=d.id) }}" onsubmit="return confirm('Ceci est une simulation de paiement Mobile Money (aucun vrai montant ne sera débité). Confirmer ?');">
@@ -64,7 +64,7 @@
       {% endif %}
     </article>
   {% else %}
-    <div class="requests-empty"><div>✦</div><h2>Aucune demande ici</h2><p>Vos demandes de prestation apparaîtront dans cet espace.</p><a href="{{ url_for('photographes') }}" class="btn btn-primary">Découvrir les photographes</a></div>
+    <div class="requests-empty"><div>✦</div><h2>Aucune demande ici</h2><p>Vos demandes de prestation apparaîtront dans cet espace.</p><a href="{{ url_for('photographes') }}" class="btn btn-primary">Découvrir les prestataires</a></div>
   {% endfor %}
   </div>
 </section>

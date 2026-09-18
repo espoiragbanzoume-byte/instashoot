@@ -7,7 +7,7 @@
     <div class="pc-post-head">
       {% if album.photographe.avatar_url %}<img src="{{ album.photographe.avatar_url }}" class="pc-post-avatar" alt="{{ album.photographe.nom }}">{% else %}<div class="pc-post-avatar pc-avatar-letter">{{ album.photographe.nom[:1]|upper }}</div>{% endif %}
       <div class="pc-post-author"><a href="{{ url_for('profil_photographe', photographe_id=album.photographe.id) }}"><strong>{{ album.photographe.nom }}</strong></a><small>{{ album.created_at.strftime('%d/%m/%Y à %H:%M') }}</small></div>
-      {% if utilisateur_courant and utilisateur_courant.id == album.client_id %}<span class="pc-post-badge">By {{ album.photographe.nom }}</span>{% elif utilisateur_courant and utilisateur_courant.id == album.photographe_id and album.client %}<span class="pc-post-badge">Pour {{ album.client.nom }}</span>{% elif album.client %}<span class="pc-post-badge">Album collaboratif</span>{% endif %}
+      {% if utilisateur_courant and utilisateur_courant.id == album.client_id %}<span class="pc-post-badge">Par {{ album.photographe.nom }}</span>{% elif utilisateur_courant and utilisateur_courant.id == album.photographe_id and album.client %}<span class="pc-post-badge">Pour {{ album.client.nom }}</span>{% elif album.client %}<span class="pc-post-badge">Album collaboratif</span>{% endif %}
     </div>
 
     {% if utilisateur_courant and album.client_id == utilisateur_courant.id and not album.collaboration_acceptee %}

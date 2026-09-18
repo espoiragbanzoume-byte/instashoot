@@ -471,15 +471,21 @@ async function liker_depuis_doubletap(zone) {
   } catch (e) { /* échec silencieux : l'animation reste visible, ce n'est pas grave */ }
 }
 
+const minuteriesTap = new WeakMap();
+
 document.addEventListener('click', (event) => {
   const zone = event.target.closest('.pc-doubletap-zone');
   if (!zone || event.target.closest('button, .pc-carousel-arrow, .pc-carousel-dot')) return;
 
+  const lien = zone.tagName === 'A' ? zone : zone.querySelector('a');
   const maintenant = Date.now();
   const dernier = derniersTaps.get(zone) || 0;
   derniersTaps.set(zone, maintenant);
 
   if (maintenant - dernier < 350) {
+    // Double-tap confirmé : on annule la navigation et la minuterie du simple tap.
+    event.preventDefault();
+    clearTimeout(minuteriesTap.get(zone));
     if (!zone.dataset.connecte) {
       ouvrirModalConnexion();
       derniersTaps.set(zone, 0);
@@ -488,6 +494,13 @@ document.addEventListener('click', (event) => {
     afficherCoeurFlottant(zone);
     liker_depuis_doubletap(zone);
     derniersTaps.set(zone, 0); // évite un triple-tap qui relancerait un double-tap
+  } else if (lien) {
+    // Simple tap : on attend un court instant pour voir si un second tap arrive
+    // avant de vraiment ouvrir la publication.
+    event.preventDefault();
+    const cible = lien.href;
+    const minuterie = setTimeout(() => { window.location.href = cible; }, 300);
+    minuteriesTap.set(zone, minuterie);
   }
 });
 
@@ -854,6 +867,7 @@ document.addEventListener('click', function(event) {
 });
 
 // ============================
+// ============================
 // Swipe horizontal entre les onglets du profil (façon Instagram)
 // ============================
 (function () {
@@ -885,5 +899,35 @@ document.addEventListener('click', function(event) {
 
     const bouton = onglets[indexSuivant];
     basculerOngletProfil(bouton.dataset.tab, bouton);
+  }, { passive: true });
+})();
+
+// ============================
+// Swipe horizontal pour naviguer entre les photos d'un carrousel
+// (une publication à plusieurs photos), essentiel sur mobile où
+// les flèches sont masquées dans le fil.
+// ============================
+(function () {
+  let depart = null;
+  let zoneActive = null;
+
+  document.addEventListener('touchstart', (e) => {
+    const zone = e.target.closest('.pc-carousel[data-carousel]');
+    if (!zone || e.touches.length !== 1) { depart = null; zoneActive = null; return; }
+    depart = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+    zoneActive = zone;
+  }, { passive: true });
+
+  document.addEventListener('touchend', (e) => {
+    if (!depart || !zoneActive) return;
+    const touche = e.changedTouches[0];
+    const dx = touche.clientX - depart.x;
+    const dy = touche.clientY - depart.y;
+    const id = zoneActive.dataset.carousel;
+    depart = null;
+    zoneActive = null;
+
+    if (Math.abs(dx) < 40 || Math.abs(dx) < Math.abs(dy) * 1.3) return;
+    carouselAlbum(id, dx < 0 ? 1 : -1);
   }, { passive: true });
 })();
