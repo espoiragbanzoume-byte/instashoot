@@ -16,9 +16,10 @@
       <div id="filtres-photographes" class="filtres-panel {{ 'ouvert' if ville or type_prestation or metier else '' }}">
         <select name="ville" class="modern-native-select"><option value="">Toutes les villes</option>{% for option in villes_disponibles %}<option value="{{ option }}" {{ 'selected' if ville == option else '' }}>{{ option }}</option>{% endfor %}</select>
         <select name="metier" class="modern-native-select">
-          <option value="">Photographes & vidéastes</option>
-          <option value="photo" {{ 'selected' if metier == 'photo' else '' }}>Photographes</option>
-          <option value="video" {{ 'selected' if metier == 'video' else '' }}>Vidéastes</option>
+          <option value="">Tous les métiers</option>
+          {% for m in ['Photographe', 'Vidéaste', 'Monteur/monteuse vidéo', 'Retoucheur(se) photo', 'Graphiste'] %}
+            <option value="{{ m }}" {{ 'selected' if metier == m else '' }}>{{ m }}</option>
+          {% endfor %}
         </select>
         <select name="type" class="modern-native-select">
           <option value="">Type de prestation</option>

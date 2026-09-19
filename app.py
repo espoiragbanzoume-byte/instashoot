@@ -176,10 +176,8 @@ def rechercher_photographes(mot_cle="", ville="", type_prestation="", metier="")
         query = query.filter(Utilisateur.ville.ilike(f"%{ville}%"))
     if type_prestation:
         query = query.filter(ProfilPhotographe.specialites.ilike(f"%{type_prestation}%"))
-    if metier == "photo":
-        query = query.filter(ProfilPhotographe.fait_photo.is_(True))
-    elif metier == "video":
-        query = query.filter(ProfilPhotographe.fait_video.is_(True))
+    if metier:
+        query = query.filter(ProfilPhotographe.metiers_liste.ilike(f"%{metier}%"))
 
     return query.all()
 
@@ -480,10 +478,6 @@ def publier_reel():
     if utilisateur is None or utilisateur.role != "photographe":
         session.pop("utilisateur_id", None)
         return redirect(url_for("connexion"))
-
-    if not (utilisateur.profil_photographe and utilisateur.profil_photographe.fait_video):
-        flash("Seuls les comptes proposant la vidéo peuvent publier un Reel.", "error")
-        return redirect(url_for("mon_profil"))
 
     legende = request.form.get("legende", "").strip()
     fichier_video = request.files.get("video")
@@ -1260,7 +1254,7 @@ def inscription_ajax():
     db.session.flush()
 
     if role == "photographe":
-        metiers = request.form.getlist("metiers")
+        metiers_choisis = [m.strip() for m in request.form.get("metiers", "").split(",") if m.strip() in ProfilPhotographe.METIERS_VALIDES]
         profil = ProfilPhotographe(
             id=u.id,
             specialites=request.form.get("specialites", "").strip(),
@@ -1268,8 +1262,7 @@ def inscription_ajax():
             annees_experience=request.form.get("annees_experience", 0, type=int),
             tarif_min=request.form.get("tarif_min", 0, type=int),
             reseaux_sociaux=request.form.get("reseaux_sociaux", "").strip(),
-            fait_photo=("photo" in metiers) or not metiers,
-            fait_video=("video" in metiers),
+            metiers_liste=", ".join(metiers_choisis) or "Photographe",
         )
         db.session.add(profil)
 
@@ -1301,7 +1294,7 @@ def inscription():
         db.session.flush()
 
         if role == "photographe":
-            metiers = request.form.getlist("metiers")
+            metiers_choisis = [m.strip() for m in request.form.get("metiers", "").split(",") if m.strip() in ProfilPhotographe.METIERS_VALIDES]
             profil = ProfilPhotographe(
                 id=u.id,
                 specialites=request.form.get("specialites", "").strip(),
@@ -1309,8 +1302,7 @@ def inscription():
                 annees_experience=request.form.get("annees_experience", 0, type=int),
                 tarif_min=request.form.get("tarif_min", 0, type=int),
                 reseaux_sociaux=request.form.get("reseaux_sociaux", "").strip(),
-                fait_photo=("photo" in metiers) or not metiers,
-                fait_video=("video" in metiers),
+                metiers_liste=", ".join(metiers_choisis) or "Photographe",
             )
             db.session.add(profil)
 
@@ -1642,7 +1634,7 @@ def migrer_sqlite():
                 if c not in cols: conn.execute(text(f"ALTER TABLE utilisateur ADD COLUMN {c} {t}"))
         if "profil_photographe" in tables:
             cols = {c["name"] for c in insp.get_columns("profil_photographe")}
-            additions = {"disponibilite":"VARCHAR(255) DEFAULT 'Disponible sur demande'","visibilite_pro":"BOOLEAN DEFAULT 1","fait_photo":"BOOLEAN DEFAULT 1","fait_video":"BOOLEAN DEFAULT 0"}
+            additions = {"disponibilite":"VARCHAR(255) DEFAULT 'Disponible sur demande'","visibilite_pro":"BOOLEAN DEFAULT 1","fait_photo":"BOOLEAN DEFAULT 1","fait_video":"BOOLEAN DEFAULT 0","metiers_liste":"VARCHAR(255) DEFAULT 'Photographe'"}
             for c,t in additions.items():
                 if c not in cols: conn.execute(text(f"ALTER TABLE profil_photographe ADD COLUMN {c} {t}"))
         if "reservation" in tables:

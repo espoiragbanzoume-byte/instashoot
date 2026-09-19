@@ -173,13 +173,24 @@
 </button></div></label>
         <div id="modal-champs-photographe" class="signup-pro-fields" style="display:none;">
           <div class="form-section-label pro-section-label">Votre activité professionnelle</div>
-          <div class="pc-specialties-field">
+          <div class="pc-specialties-field" data-specialties-picker>
             <span class="pc-field-label">Votre métier</span>
-            <div class="metiers-picker">
-              <label class="metier-option"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8h3l1.5-2h7L17 8h3a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1Z"/><circle cx="12" cy="13" r="3.5"/></svg><span>Photographe</span><input type="checkbox" name="metiers" value="photo" checked></label>
-              <label class="metier-option"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="6" width="14" height="12" rx="2"/><path d="m16 10 5.5-3.2a1 1 0 0 1 1.5.86v8.68a1 1 0 0 1-1.5.86L16 14"/></svg><span>Vidéaste</span><input type="checkbox" name="metiers" value="video"></label>
+            <div class="pc-specialties-picker">
+              <button type="button" class="pc-specialties-trigger" aria-haspopup="listbox" aria-expanded="false">
+                <span class="pc-specialties-label">Choisir vos métiers</span>
+              </button>
+              <div class="pc-specialties-menu" role="listbox" aria-multiselectable="true">
+                {% for m in ['Photographe', 'Vidéaste', 'Monteur/monteuse vidéo', 'Retoucheur(se) photo', 'Graphiste'] %}
+                <label class="pc-specialty-option">
+                  <input type="checkbox" value="{{ m }}" {% if loop.first %}checked{% endif %}>
+                  <span>{{ m }}</span>
+                  <b aria-hidden="true">✓</b>
+                </label>
+                {% endfor %}
+              </div>
+              <input type="hidden" name="metiers" class="pc-specialties-value" value="Photographe">
             </div>
-            <small class="pc-specialties-hint">Cochez une ou les deux — vous pouvez proposer les deux prestations.</small>
+            <small class="pc-specialties-hint">Sélectionnez un ou plusieurs métiers — vous pouvez proposer plusieurs prestations.</small>
           </div>
           <div class="pc-specialties-field" data-specialties-picker>
             <span class="pc-field-label">Spécialités</span>

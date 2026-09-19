@@ -195,18 +195,22 @@ class ProfilPhotographe(db.Model):
     visibilite_pro = db.Column(db.Boolean, default=True)
     fait_photo = db.Column(db.Boolean, default=True)
     fait_video = db.Column(db.Boolean, default=False)
+    metiers_liste = db.Column(db.String(255), default="Photographe")
+
+    METIERS_VALIDES = ["Photographe", "Vidéaste", "Monteur/monteuse vidéo", "Retoucheur(se) photo", "Graphiste"]
 
     def liste_specialites(self):
         if not self.specialites:
             return []
         return [s.strip() for s in self.specialites.split(",") if s.strip()]
 
+    def liste_metiers(self):
+        if not self.metiers_liste:
+            return ["Photographe"]
+        return [m.strip() for m in self.metiers_liste.split(",") if m.strip()]
+
     def metiers(self):
-        if self.fait_photo and self.fait_video:
-            return "Photographe & Vidéaste"
-        if self.fait_video:
-            return "Vidéaste"
-        return "Photographe"
+        return " · ".join(self.liste_metiers())
 
 
 class Reservation(db.Model):
