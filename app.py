@@ -182,6 +182,16 @@ def rechercher_photographes(mot_cle="", ville="", type_prestation="", metier="")
     return query.all()
 
 
+@app.route("/sw.js")
+def service_worker():
+    # Servi à la racine (et non /static/sw.js) pour que son "scope" couvre tout le site,
+    # pas seulement le dossier /static/.
+    reponse = app.send_static_file("sw.js")
+    reponse.headers["Service-Worker-Allowed"] = "/"
+    reponse.headers["Cache-Control"] = "no-cache"
+    return reponse
+
+
 @app.route("/")
 def accueil():
     mot_cle = request.args.get("q", "").strip()

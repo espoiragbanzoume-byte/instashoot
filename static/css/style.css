@@ -4495,3 +4495,63 @@ button:disabled, .btn:disabled, [disabled] { cursor: not-allowed; }
 }
 .reel-upload-choice strong { font-size: .88rem; }
 .reel-upload-choice small { font-size: .72rem; color: var(--charcoal); text-align: center; word-break: break-all; }
+
+/* ============================
+   Bannière d'installation PWA
+   ============================ */
+.pwa-install-banner {
+  position: fixed;
+  left: 12px;
+  right: 12px;
+  bottom: 12px;
+  z-index: 1200;
+  background: #20231f;
+  color: #fff;
+  border-radius: 14px;
+  padding: 0.9rem 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  box-shadow: 0 12px 30px rgba(0,0,0,0.3);
+  animation: pwa-banner-in 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes pwa-banner-in {
+  from { opacity: 0; transform: translateY(20px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.pwa-install-icon { font-size: 1.4rem; flex-shrink: 0; }
+
+.pwa-install-texte {
+  flex: 1;
+  font-size: 0.85rem;
+  line-height: 1.35;
+}
+
+.pwa-install-btn {
+  background: #fff;
+  color: #20231f;
+  border: none;
+  border-radius: 8px;
+  padding: 0.5rem 0.9rem;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.pwa-install-fermer {
+  background: none;
+  border: none;
+  color: rgba(255,255,255,0.6);
+  font-size: 0.9rem;
+  cursor: pointer;
+  flex-shrink: 0;
+  padding: 0.2rem;
+}
+
+/* Quand la barre de navigation mobile du bas est visible, on remonte la bannière au-dessus */
+@media (max-width: 780px) {
+  .pwa-install-banner { bottom: calc(64px + env(safe-area-inset-bottom, 0px) + 10px); }
+}

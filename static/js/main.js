@@ -931,3 +931,73 @@ document.addEventListener('click', function(event) {
     carouselAlbum(id, dx < 0 ? 1 : -1);
   }, { passive: true });
 })();
+
+/* =========================================================
+   PWA — installation de l'application
+   ========================================================= */
+(function () {
+  // 1. Enregistrement du service worker (rend le site installable sur Chrome/Android)
+  if ("serviceWorker" in navigator) {
+    window.addEventListener("load", () => {
+      navigator.serviceWorker.register("/sw.js", { scope: "/" }).catch(() => {});
+    });
+  }
+
+  function dejaInstallee() {
+    return window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone === true;
+  }
+
+  function afficherBanniere(texte, boutonTexte, onClic) {
+    if (dejaInstallee()) return;
+    if (localStorage.getItem("instashoot-install-masque") === "1") return;
+    if (document.getElementById("pwa-install-banner")) return;
+
+    const banniere = document.createElement("div");
+    banniere.id = "pwa-install-banner";
+    banniere.className = "pwa-install-banner";
+    banniere.innerHTML = `
+      <span class="pwa-install-icon">📲</span>
+      <span class="pwa-install-texte">${texte}</span>
+      <button type="button" class="pwa-install-btn">${boutonTexte}</button>
+      <button type="button" class="pwa-install-fermer" aria-label="Fermer">✕</button>
+    `;
+    document.body.appendChild(banniere);
+
+    banniere.querySelector(".pwa-install-btn").addEventListener("click", onClic);
+    banniere.querySelector(".pwa-install-fermer").addEventListener("click", () => {
+      banniere.remove();
+      localStorage.setItem("instashoot-install-masque", "1");
+    });
+  }
+
+  // 2. Android / Chrome : InstaShoot propose son propre bouton d'installation,
+  // qui déclenche la vraie invite native du navigateur.
+  let evenementInstallDiffere = null;
+  window.addEventListener("beforeinstallprompt", (event) => {
+    event.preventDefault();
+    evenementInstallDiffere = event;
+    afficherBanniere("Installez InstaShoot comme une vraie application.", "Installer", async () => {
+      if (!evenementInstallDiffere) return;
+      evenementInstallDiffere.prompt();
+      await evenementInstallDiffere.userChoice;
+      evenementInstallDiffere = null;
+      const b = document.getElementById("pwa-install-banner");
+      if (b) b.remove();
+    });
+  });
+
+  // 3. iPhone (Safari) : pas d'invite automatique possible, on explique la manipulation.
+  const estIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
+  const estSafari = /safari/i.test(navigator.userAgent) && !/crios|fxios|edgios/i.test(navigator.userAgent);
+  if (estIOS && estSafari) {
+    afficherBanniere(
+      "Pour installer InstaShoot : appuyez sur Partager, puis « Sur l'écran d'accueil ».",
+      "Compris",
+      () => {
+        const b = document.getElementById("pwa-install-banner");
+        if (b) b.remove();
+        localStorage.setItem("instashoot-install-masque", "1");
+      }
+    );
+  }
+})();
